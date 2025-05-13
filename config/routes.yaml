@@ -1,0 +1,4 @@
+news_pull_import:
+  path: /news-pull/import
+  controller: PhilTenno\NewsPull\Controller\PublicImportController
+  methods: [GET]
