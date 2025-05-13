@@ -1,5 +1,5 @@
 news_pull_backend:
-  path: /contao/news_pull
+  path: /news-pull/import
   defaults:
     _controller: 'PhilTenno\NewsPull\Controller\BackendController::indexAction'
   methods: [GET]
