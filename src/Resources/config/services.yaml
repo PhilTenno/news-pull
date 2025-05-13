@@ -24,9 +24,9 @@ PhilTenno\NewsPull\Controller\BackendController:
     $formFactory: '@form.factory'
     
 PhilTenno\NewsPull\Controller\PublicImportController:
-        public: true
-        arguments:
-            $newsImportService: '@PhilTenno\NewsPull\Service\NewsImportService'    
+  public: true
+  arguments:
+      $newsImportService: '@PhilTenno\NewsPull\Service\NewsImportService'    
 
 monolog.logger.news_pull:
   parent: monolog.logger
