@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'philtenno/news-pull',
-        'pretty_version' => '1.0.0+no-version-set',
-        'version' => '1.0.0.0',
-        'reference' => null,
+        'pretty_version' => 'dev-main',
+        'version' => 'dev-main',
+        'reference' => '4caf89963a360e323777f6f28486fc4b6e298754',
         'type' => 'contao-bundle',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -728,9 +728,9 @@
             'dev_requirement' => false,
         ),
         'philtenno/news-pull' => array(
-            'pretty_version' => '1.0.0+no-version-set',
-            'version' => '1.0.0.0',
-            'reference' => null,
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '4caf89963a360e323777f6f28486fc4b6e298754',
             'type' => 'contao-bundle',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

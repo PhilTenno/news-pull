@@ -241,7 +241,7 @@ class ComposerStaticInit2fb6db52e11131c9f04842909ce2e0b7
             'Psr\\Clock\\' => 10,
             'Psr\\Cache\\' => 10,
             'PhpParser\\' => 10,
-            'Philtenno\\NewsPull\\' => 19,
+            'PhilTenno\\NewsPull\\' => 19,
             'ParagonIE\\ConstantTime\\' => 23,
             'PHPStan\\PhpDocParser\\' => 21,
         ),
@@ -736,7 +736,7 @@ class ComposerStaticInit2fb6db52e11131c9f04842909ce2e0b7
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
         ),
-        'Philtenno\\NewsPull\\' => 
+        'PhilTenno\\NewsPull\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),
