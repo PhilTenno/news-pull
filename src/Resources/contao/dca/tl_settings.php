@@ -1,6 +1,7 @@
 <?php
 
-file_put_contents(TL_ROOT . '/news_pull_debug.txt', 'tl_settings.php geladen: ' . date('c') . "\n", FILE_APPEND);
+error_log('DCA tl_settings.php wird geladen: ' . date('c'));
+file_put_contents(__DIR__ . '/../../../../news_pull_debug.txt', 'tl_settings.php geladen: ' . date('c') . "\n", FILE_APPEND);
 
 $GLOBALS['TL_DCA']['tl_settings']['palettes']['default'] = str_replace(
     '{chmod_legend}',

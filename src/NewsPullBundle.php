@@ -2,12 +2,13 @@
 
 namespace PhilTenno\NewsPull;
 
-use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-class NewsPullBundle extends AbstractBundle
+class NewsPullBundle extends Bundle
 {
-    public function getPath(): string
+    public function boot(): void
     {
-        return \dirname(__DIR__);
+        error_log('NewsPullBundle::boot() wurde aufgerufen: ' . date('c'));
+        parent::boot();
     }
 }
