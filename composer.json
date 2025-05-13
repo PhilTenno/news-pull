@@ -1,0 +1,43 @@
+{
+    "name": "philtenno/news-pull",
+    "description": "news import automation",
+    "keywords": ["contao", "extension", "news", "import"],
+    "type": "contao-bundle",
+    "require": {
+        "contao/core-bundle": "^5.3.x"
+    },
+    "license": "LGPL-3.0-or-later",
+    "autoload": {
+        "psr-4": {
+            "PhilTenno\\NewsPull\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "contao/core-bundle": "^5.3",
+        "symfony/config": "^6.0 || ^7.0",
+        "symfony/dependency-injection": "^6.0 || ^7.0",
+        "symfony/http-kernel": "^6.0 || ^7.0",
+        "symfony/console": "^6.0 || ^7.0",
+        "symfony/filesystem": "^6.0 || ^7.0",
+        "symfony/finder": "^6.0 || ^7.0",
+        "symfony/form": "^6.0 || ^7.0",
+        "symfony/validator": "^6.0 || ^7.0",
+        "doctrine/orm": "^2.10"
+    },    
+    "authors": [
+        {
+            "name": "Hardbitrocker",
+            "email": "git@hardbitrocker.de"
+        }
+    ],    
+    "extra": {
+        "contao-manager-plugin": "PhilTenno\\NewsPull\\ContaoManager\\Plugin"
+    },
+    "config": {
+        "allow-plugins": {
+            "contao-components/installer": true,
+            "php-http/discovery": true
+        }
+    }
+}
