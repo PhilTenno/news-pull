@@ -1,5 +1,0 @@
-news_pull_backend:
-  path: /news-pull/import
-  defaults:
-    _controller: 'PhilTenno\NewsPull\Controller\BackendController::indexAction'
-  methods: [GET]
