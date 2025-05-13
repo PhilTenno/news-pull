@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 use Contao\NewsArchiveModel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Contao\PageModel;
+use Contao\Config;
 
 class NewsImportService
 {
@@ -45,6 +46,11 @@ class NewsImportService
 
     public function importNews(): void
     {
+
+        // Logging direkt am Anfang der Methode
+        $this->logger->info('NewsImportService: importNews() wurde aufgerufen');
+
+
         $uploadPath = $this->projectDir . '/web/' . $this->uploadDir;
 
         if (!is_dir($uploadPath)) {
@@ -95,11 +101,18 @@ class NewsImportService
 
     private function createNewsArticle(array $newsData, ?string $imageFile): void
     {
-        // Get the news archive based on the language
-        $newsArchive = $this->getNewsArchive($newsData['lang'] ?? 'de');
+        // Hole die Archiv-ID aus den Contao-Einstellungen
+        $archiveId = Config::get('news_pull_news_archive');
+        
+        if (!$archiveId) {
+            throw new \Exception('No news archive configured in settings. Please select a news archive in the backend settings.');
+        }
+
+        // Hole das Nachrichtenarchiv
+        $newsArchive = NewsArchiveModel::findByPk($archiveId);
 
         if (!$newsArchive) {
-            throw new \Exception('No news archive found for language: ' . ($newsData['lang'] ?? 'de'));
+            throw new \Exception('Configured news archive (ID: ' . $archiveId . ') not found.');
         }
 
         // Create the news article
@@ -112,7 +125,8 @@ class NewsImportService
         $news->date = time();
         $news->time = time();
         $news->addImage = $imageFile !== null ? '1' : '';
-        $news->published = 1; // Or set to 0 if the checkbox is unchecked
+        // Prüfe die Auto-Publish Einstellung
+        $news->published = Config::get('news_pull_auto_publish') ? '1' : '';
         $news->metaTitle = $newsData['title'];
         $news->metaDescription = $newsData['teaser'];
         $news->save();
@@ -126,12 +140,6 @@ class NewsImportService
         }
 
         $this->createTextElement($news->id, 'text', $newsData['text']);
-    }
-
-    private function getNewsArchive(string $language): ?NewsArchiveModel
-    {
-        $newsArchive = NewsArchiveModel::findOneBy('news_pull_language', $language);
-        return $newsArchive ?: null;
     }
 
     private function createTextElement(int $newsId, string $type, string $text): void
