@@ -1,6 +1,6 @@
 <?php
 
-namespace PhilTenno\NewsPull\ContaoManager;
+namespace PhilTenno\NewsPullBundle\ContaoManager;
 
 use Contao\CoreBundle\ContaoCoreBundle;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;

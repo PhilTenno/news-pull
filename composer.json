@@ -3,9 +3,6 @@
     "description": "news import automation",
     "keywords": ["contao", "extension", "news", "import"],
     "type": "contao-bundle",
-    "require": {
-        "contao/core-bundle": "^5.3.x"
-    },
     "license": "LGPL-3.0-or-later",
     "autoload": {
         "psr-4": {
