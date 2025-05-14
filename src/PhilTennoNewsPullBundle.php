@@ -4,7 +4,7 @@ namespace PhilTenno\NewsPull;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
-class NewsPullBundle extends Bundle
+class PhilTennoNewsPullBundle extends Bundle
 {
     public function boot(): void
     {
