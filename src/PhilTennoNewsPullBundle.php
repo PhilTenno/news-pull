@@ -1,6 +1,6 @@
 <?php
 
-namespace PhilTenno\NewsPull;
+namespace PhilTenno\NewsPullBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
