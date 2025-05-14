@@ -32,7 +32,7 @@
         }
     ],    
     "extra": {
-        "contao-manager-plugin": "PhilTenno\\NewsPull\\ContaoManager\\Plugin"
+        "contao-manager-plugin": "PhilTenno\\NewsPullBundle\\ContaoManager\\Plugin"
     },
     "config": {
         "allow-plugins": {
