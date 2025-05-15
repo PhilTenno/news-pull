@@ -3,7 +3,7 @@
         'name' => 'philtenno/news-pull',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'c859b86eff37e015887c2329b6a4449aa36b759c',
+        'reference' => '616f307f12371213ed80a6e86803bcde1aa68495',
         'type' => 'contao-bundle',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -739,7 +739,7 @@
         'philtenno/news-pull' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'c859b86eff37e015887c2329b6a4449aa36b759c',
+            'reference' => '616f307f12371213ed80a6e86803bcde1aa68495',
             'type' => 'contao-bundle',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
