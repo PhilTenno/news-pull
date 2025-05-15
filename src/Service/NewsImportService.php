@@ -129,8 +129,13 @@ class NewsImportService
             throw new \Exception('Configured news archive (ID: ' . $archiveId . ') not found.');
         }
 
+        $stmt = $this->connection->executeQuery('SELECT id FROM tl_user ORDER BY id ASC LIMIT 1');
+        $defaultAuthorId = $stmt->fetchOne();
+
+
         $news = new NewsModel();
         $news->pid = $newsArchive->id;
+        $news->author = $defaultAuthorId;
         $news->headline = $newsData['title'];
         $news->alias = StringUtil::standardize($newsData['title']);
         $news->teaser = $newsData['teaser'];
