@@ -152,6 +152,7 @@ return array(
     'DASPRiD\\Enum\\' => array($vendorDir . '/dasprid/enum/src'),
     'Cron\\' => array($vendorDir . '/dragonmantank/cron-expression/src/Cron'),
     'Cose\\' => array($vendorDir . '/web-auth/cose-lib/src'),
+    'Contao\\ManagerPlugin\\' => array($vendorDir . '/contao/manager-plugin/src'),
     'Contao\\ImagineSvg\\' => array($vendorDir . '/contao/imagine-svg/src'),
     'Contao\\Image\\' => array($vendorDir . '/contao/image/src'),
     'Contao\\CoreBundle\\' => array($vendorDir . '/contao/core-bundle/src'),

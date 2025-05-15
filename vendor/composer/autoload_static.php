@@ -328,6 +328,7 @@ class ComposerStaticInit2fb6db52e11131c9f04842909ce2e0b7
         array (
             'Cron\\' => 5,
             'Cose\\' => 5,
+            'Contao\\ManagerPlugin\\' => 21,
             'Contao\\ImagineSvg\\' => 18,
             'Contao\\Image\\' => 13,
             'Contao\\CoreBundle\\' => 18,
@@ -941,6 +942,10 @@ class ComposerStaticInit2fb6db52e11131c9f04842909ce2e0b7
         'Cose\\' => 
         array (
             0 => __DIR__ . '/..' . '/web-auth/cose-lib/src',
+        ),
+        'Contao\\ManagerPlugin\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/contao/manager-plugin/src',
         ),
         'Contao\\ImagineSvg\\' => 
         array (

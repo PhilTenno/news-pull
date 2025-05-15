@@ -1751,6 +1751,85 @@
             "install-path": "../contao/imagine-svg"
         },
         {
+            "name": "contao/manager-plugin",
+            "version": "2.13.3",
+            "version_normalized": "2.13.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/contao/manager-plugin.git",
+                "reference": "b1b92e392f2b74f009a3f022b1451053cbd6b329"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/contao/manager-plugin/zipball/b1b92e392f2b74f009a3f022b1451053cbd6b329",
+                "reference": "b1b92e392f2b74f009a3f022b1451053cbd6b329",
+                "shasum": ""
+            },
+            "require": {
+                "composer-plugin-api": "^1.7 || ^2.0",
+                "php": "^7.1 || ^8.0",
+                "symfony/config": "^3.3 || ^4.0 || ^5.0 || ^6.0 || ^7.0",
+                "symfony/dependency-injection": "^3.3 || ^4.0 || ^5.0 || ^6.0 || ^7.0",
+                "symfony/filesystem": "^3.3 || ^4.0 || ^5.0 || ^6.0 || ^7.0",
+                "symfony/http-kernel": "^3.3 || ^4.0 || ^5.0 || ^6.0 || ^7.0",
+                "symfony/routing": "^3.3 || ^4.0 || ^5.0 || ^6.0 || ^7.0"
+            },
+            "conflict": {
+                "contao/manager-bundle": "4.9.* <4.9.4"
+            },
+            "require-dev": {
+                "bamarni/composer-bin-plugin": "^1.4",
+                "composer/composer": "^1.7 || ^2.0",
+                "contao/core-bundle": "^4.4 || ^5.0",
+                "ext-zip": "*",
+                "php-http/guzzle6-adapter": "^1.1",
+                "phpunit/phpunit": "^8.5 || ^9.3",
+                "symfony/phpunit-bridge": "^3.4.40 || ^4.0 || ^5.0 || ^6.0 || ^7.0",
+                "webmozart/path-util": "^2.0"
+            },
+            "time": "2024-09-20T13:38:03+00:00",
+            "type": "composer-plugin",
+            "extra": {
+                "class": [
+                    "Contao\\ManagerPlugin\\Composer\\ArtifactsPlugin",
+                    "Contao\\ManagerPlugin\\Composer\\ManagerPluginInstaller",
+                    "Contao\\ManagerPlugin\\Composer\\AppAutoloadPlugin"
+                ],
+                "bamarni-bin": {
+                    "bin-links": false,
+                    "target-directory": "tools"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Contao\\ManagerPlugin\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Andreas Schempp",
+                    "homepage": "https://github.com/aschempp"
+                }
+            ],
+            "description": "Contao 4 manager plugin",
+            "support": {
+                "issues": "https://github.com/contao/manager-plugin/issues",
+                "source": "https://github.com/contao/manager-plugin/tree/2.13.3"
+            },
+            "funding": [
+                {
+                    "url": "https://to.contao.org/donate",
+                    "type": "custom"
+                }
+            ],
+            "install-path": "../contao/manager-plugin"
+        },
+        {
             "name": "dasprid/enum",
             "version": "1.0.6",
             "version_normalized": "1.0.6.0",

@@ -30,7 +30,6 @@ class BackendController extends AbstractController
     #[Route('/news-pull/import', name: 'news_pull_import')]
     public function indexAction(Request $request): Response
     {
-        $this->newsImportService->logger->info('BackendController: indexAction wurde aufgerufen');
 
         $this->newsImportService->importNews();
 
