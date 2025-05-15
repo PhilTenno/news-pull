@@ -328,6 +328,7 @@ class ComposerStaticInit2fb6db52e11131c9f04842909ce2e0b7
         array (
             'Cron\\' => 5,
             'Cose\\' => 5,
+            'Contao\\NewsBundle\\' => 18,
             'Contao\\ManagerPlugin\\' => 21,
             'Contao\\ImagineSvg\\' => 18,
             'Contao\\Image\\' => 13,
@@ -943,6 +944,10 @@ class ComposerStaticInit2fb6db52e11131c9f04842909ce2e0b7
         array (
             0 => __DIR__ . '/..' . '/web-auth/cose-lib/src',
         ),
+        'Contao\\NewsBundle\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/contao/news-bundle/src',
+        ),
         'Contao\\ManagerPlugin\\' => 
         array (
             0 => __DIR__ . '/..' . '/contao/manager-plugin/src',
@@ -1184,6 +1189,11 @@ class ComposerStaticInit2fb6db52e11131c9f04842909ce2e0b7
         'Contao\\ModuleMaintenance' => __DIR__ . '/..' . '/contao/core-bundle/contao/modules/ModuleMaintenance.php',
         'Contao\\ModuleModel' => __DIR__ . '/..' . '/contao/core-bundle/contao/models/ModuleModel.php',
         'Contao\\ModuleNavigation' => __DIR__ . '/..' . '/contao/core-bundle/contao/modules/ModuleNavigation.php',
+        'Contao\\ModuleNews' => __DIR__ . '/..' . '/contao/news-bundle/contao/modules/ModuleNews.php',
+        'Contao\\ModuleNewsArchive' => __DIR__ . '/..' . '/contao/news-bundle/contao/modules/ModuleNewsArchive.php',
+        'Contao\\ModuleNewsList' => __DIR__ . '/..' . '/contao/news-bundle/contao/modules/ModuleNewsList.php',
+        'Contao\\ModuleNewsMenu' => __DIR__ . '/..' . '/contao/news-bundle/contao/modules/ModuleNewsMenu.php',
+        'Contao\\ModuleNewsReader' => __DIR__ . '/..' . '/contao/news-bundle/contao/modules/ModuleNewsReader.php',
         'Contao\\ModulePersonalData' => __DIR__ . '/..' . '/contao/core-bundle/contao/modules/ModulePersonalData.php',
         'Contao\\ModuleProxy' => __DIR__ . '/..' . '/contao/core-bundle/contao/modules/ModuleProxy.php',
         'Contao\\ModuleQuicklink' => __DIR__ . '/..' . '/contao/core-bundle/contao/modules/ModuleQuicklink.php',
@@ -1195,6 +1205,9 @@ class ComposerStaticInit2fb6db52e11131c9f04842909ce2e0b7
         'Contao\\ModuleSitemap' => __DIR__ . '/..' . '/contao/core-bundle/contao/modules/ModuleSitemap.php',
         'Contao\\ModuleTwoFactor' => __DIR__ . '/..' . '/contao/core-bundle/contao/modules/ModuleTwoFactor.php',
         'Contao\\ModuleWizard' => __DIR__ . '/..' . '/contao/core-bundle/contao/widgets/ModuleWizard.php',
+        'Contao\\News' => __DIR__ . '/..' . '/contao/news-bundle/contao/classes/News.php',
+        'Contao\\NewsArchiveModel' => __DIR__ . '/..' . '/contao/news-bundle/contao/models/NewsArchiveModel.php',
+        'Contao\\NewsModel' => __DIR__ . '/..' . '/contao/news-bundle/contao/models/NewsModel.php',
         'Contao\\OptInModel' => __DIR__ . '/..' . '/contao/core-bundle/contao/models/OptInModel.php',
         'Contao\\OptionWizard' => __DIR__ . '/..' . '/contao/core-bundle/contao/widgets/OptionWizard.php',
         'Contao\\PageError401' => __DIR__ . '/..' . '/contao/core-bundle/contao/pages/PageError401.php',

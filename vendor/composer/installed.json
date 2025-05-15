@@ -1830,6 +1830,95 @@
             "install-path": "../contao/manager-plugin"
         },
         {
+            "name": "contao/news-bundle",
+            "version": "5.5.10",
+            "version_normalized": "5.5.10.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/contao/news-bundle.git",
+                "reference": "33a7337ebf35a309b69cc70be58ed8498d4b3378"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/contao/news-bundle/zipball/33a7337ebf35a309b69cc70be58ed8498d4b3378",
+                "reference": "33a7337ebf35a309b69cc70be58ed8498d4b3378",
+                "shasum": ""
+            },
+            "require": {
+                "contao/core-bundle": "self.version",
+                "debril/feed-io": "^6.0",
+                "friendsofsymfony/http-cache": "^3.0",
+                "php": "^8.2",
+                "symfony/config": "^6.4 || ^7.0",
+                "symfony/dependency-injection": "^6.4 || ^7.0",
+                "symfony/deprecation-contracts": "^3.0",
+                "symfony/http-foundation": "^6.4 || ^7.0",
+                "symfony/http-kernel": "^6.4 || ^7.0",
+                "symfony/polyfill-mbstring": "^1.0",
+                "symfony/yaml": "^6.4 || ^7.0"
+            },
+            "conflict": {
+                "contao/core": "*",
+                "contao/manager-plugin": "<2.0 || >=3.0"
+            },
+            "require-dev": {
+                "contao/manager-plugin": "^2.3.1",
+                "contao/test-case": "self.version",
+                "phpunit/phpunit": "^9.5",
+                "symfony/http-client": "^6.4 || ^7.0",
+                "symfony/phpunit-bridge": "^6.4 || ^7.0"
+            },
+            "time": "2025-04-17T09:46:03+00:00",
+            "type": "contao-bundle",
+            "extra": {
+                "contao-manager-plugin": "Contao\\NewsBundle\\ContaoManager\\Plugin"
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Contao\\NewsBundle\\": "src/"
+                },
+                "classmap": [
+                    "contao/"
+                ],
+                "exclude-from-classmap": [
+                    "contao/config/",
+                    "contao/dca/",
+                    "contao/languages/",
+                    "contao/templates/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Leo Feyer",
+                    "homepage": "https://github.com/leofeyer"
+                },
+                {
+                    "name": "Contao Community",
+                    "homepage": "https://contao.org/contributors"
+                }
+            ],
+            "description": "Adds news functionality to Contao",
+            "homepage": "https://contao.org",
+            "support": {
+                "docs": "https://docs.contao.org",
+                "forum": "https://community.contao.org",
+                "issues": "https://github.com/contao/contao/issues",
+                "source": "https://github.com/contao/news-bundle"
+            },
+            "funding": [
+                {
+                    "url": "https://to.contao.org/donate",
+                    "type": "other"
+                }
+            ],
+            "install-path": "../contao/news-bundle"
+        },
+        {
             "name": "dasprid/enum",
             "version": "1.0.6",
             "version_normalized": "1.0.6.0",

@@ -18,6 +18,7 @@ use Contao\NewsArchiveModel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Contao\PageModel;
 use Contao\Config;
+use Contao\FilesModel;
 
 class NewsImportService
 {
@@ -28,6 +29,7 @@ class NewsImportService
     private LoggerInterface $logger;
     private Filesystem $filesystem;
     private ContaoFramework $framework;
+    private Connection $connection;
 
     public function __construct(
         #[Autowire('%kernel.project_dir%')] string $projectDir,
@@ -35,7 +37,8 @@ class NewsImportService
         EntityManagerInterface $entityManager,
         ValidatorInterface $validator,
         LoggerInterface $logger,
-        ContaoFramework $framework
+        ContaoFramework $framework,
+        Connection $connection
     ) {
         $this->projectDir = $projectDir;
         $this->imageDir = $imageDir;
@@ -44,11 +47,9 @@ class NewsImportService
         $this->logger = $logger;
         $this->filesystem = new Filesystem();
         $this->framework = $framework;
+        $this->connection = $connection;
     }
 
-    /**
-     * Holt den Upload-Ordner aus der Contao-Konfiguration
-     */
     private function getUploadDir(): string
     {
         $this->framework->initialize();
@@ -57,7 +58,7 @@ class NewsImportService
             $this->logger->error('Kein Upload-Ordner in den Contao-Einstellungen gesetzt!');
             throw new \RuntimeException('Upload-Ordner nicht konfiguriert.');
         }
-        $fileModel = \Contao\FilesModel::findByUuid($uuid);
+        $fileModel = FilesModel::findByUuid($uuid);
         if ($fileModel === null) {
             $this->logger->error('Upload-Ordner-UUID nicht gefunden: ' . $uuid);
             throw new \RuntimeException('Upload-Ordner-UUID nicht gefunden.');
@@ -130,9 +131,9 @@ class NewsImportService
             throw new \Exception('Configured news archive (ID: ' . $archiveId . ') not found.');
         }
 
+        // Hole den ersten Backend-User als Author
         $stmt = $this->connection->executeQuery('SELECT id FROM tl_user ORDER BY id ASC LIMIT 1');
         $defaultAuthorId = $stmt->fetchOne();
-
 
         $news = new NewsModel();
         $news->pid = $newsArchive->id;
@@ -140,7 +141,6 @@ class NewsImportService
         $news->headline = $newsData['title'];
         $news->alias = StringUtil::standardize($newsData['title']);
         $news->teaser = $newsData['teaser'];
-        $news->author = 1; // Set a default author or retrieve from configuration
         $news->date = time();
         $news->time = time();
         $news->addImage = $imageFile !== null ? 1 : 0;
@@ -166,6 +166,7 @@ class NewsImportService
         $contentElement->ptable = 'tl_news';
         $contentElement->type = 'text';
         $contentElement->text = $text;
+        $contentElement->published = 1;
         $contentElement->save();
     }
 
