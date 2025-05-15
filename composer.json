@@ -6,7 +6,7 @@
     "license": "LGPL-3.0-or-later",
     "autoload": {
         "psr-4": {
-            "PhilTenno\\NewsPullBundle\\": "src/"
+            "PhilTenno\\NewsPull\\": "src/"
         }
     },
     "require": {
@@ -31,7 +31,7 @@
         }
     ],    
     "extra": {
-        "contao-manager-plugin": "PhilTenno\\NewsPullBundle\\ContaoManager\\Plugin"
+        "contao-manager-plugin": "PhilTenno\\NewsPull\\ContaoManager\\Plugin"
     },
     "config": {
         "allow-plugins": {
