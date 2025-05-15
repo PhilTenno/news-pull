@@ -1,13 +1,13 @@
 <?php
 
-namespace PhilTenno\NewsPullBundle\ContaoManager;
+namespace PhilTenno\NewsPull\ContaoManager;
 
 use Contao\CoreBundle\ContaoCoreBundle;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
 use Contao\ManagerPlugin\Routing\RoutingPluginInterface;
-use PhilTenno\NewsPull\NewsPullBundle;
+use PhilTenno\NewsPull\PhilTennoNewsPullBundle;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 
@@ -16,7 +16,7 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface
     public function getBundles(ParserInterface $parser): array
     {
         return [
-            BundleConfig::create(NewsPullBundle::class)
+            BundleConfig::create(PhilTennoNewsPullBundle::class)
                 ->setLoadAfter([ContaoCoreBundle::class])
         ];
     }

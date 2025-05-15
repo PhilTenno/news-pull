@@ -101,7 +101,7 @@ return array(
     'Psr\\Clock\\' => array($vendorDir . '/psr/clock/src'),
     'Psr\\Cache\\' => array($vendorDir . '/psr/cache/src'),
     'PhpParser\\' => array($vendorDir . '/nikic/php-parser/lib/PhpParser'),
-    'PhilTenno\\NewsPullBundle\\' => array($baseDir . '/src'),
+    'PhilTenno\\NewsPull\\' => array($baseDir . '/src'),
     'ParagonIE\\ConstantTime\\' => array($vendorDir . '/paragonie/constant_time_encoding/src'),
     'PHPStan\\PhpDocParser\\' => array($vendorDir . '/phpstan/phpdoc-parser/src'),
     'OTPHP\\' => array($vendorDir . '/spomky-labs/otphp/src'),
