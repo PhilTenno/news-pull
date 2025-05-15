@@ -2,6 +2,7 @@
 
 namespace PhilTenno\NewsPull\Service;
 
+use function Contao\standardize;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\NewsModel;
 use Contao\ContentModel;
@@ -50,12 +51,17 @@ class NewsImportService
     private function getUploadDir(): string
     {
         $this->framework->initialize();
-        $uploadDir = Config::get('newsPullUploadDir'); // Passe den Key ggf. an!
-        if (!$uploadDir) {
+        $uuid = Config::get('news_pull_upload_dir');
+        if (!$uuid) {
             $this->logger->error('Kein Upload-Ordner in den Contao-Einstellungen gesetzt!');
             throw new \RuntimeException('Upload-Ordner nicht konfiguriert.');
         }
-        return $uploadDir;
+        $fileModel = \Contao\FilesModel::findByUuid($uuid);
+        if ($fileModel === null) {
+            $this->logger->error('Upload-Ordner-UUID nicht gefunden: ' . $uuid);
+            throw new \RuntimeException('Upload-Ordner-UUID nicht gefunden.');
+        }
+        return $fileModel->path;
     }
 
     public function importNews(): void
