@@ -137,8 +137,8 @@ class NewsImportService
         $news->author = 1; // Set a default author or retrieve from configuration
         $news->date = time();
         $news->time = time();
-        $news->addImage = $imageFile !== null ? '1' : '';
-        $news->published = Config::get('news_pull_auto_publish') ? '1' : '';
+        $news->addImage = $imageFile !== null ? 1 : 0;
+        $news->published = Config::get('news_pull_auto_publish') ? 1 : 0;
         $news->metaTitle = $newsData['title'];
         $news->metaDescription = $newsData['teaser'];
         $news->save();
