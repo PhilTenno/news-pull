@@ -2,7 +2,7 @@
 
 namespace PhilTenno\NewsPull\Service;
 
-use function Contao\standardize;
+use Contao\StringUtil;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\NewsModel;
 use Contao\ContentModel;
@@ -132,7 +132,7 @@ class NewsImportService
         $news = new NewsModel();
         $news->pid = $newsArchive->id;
         $news->headline = $newsData['title'];
-        $news->alias = standardize($newsData['title']);
+        $news->alias = StringUtil::standardize($newsData['title']);
         $news->teaser = $newsData['teaser'];
         $news->author = 1; // Set a default author or retrieve from configuration
         $news->date = time();
