@@ -2,11 +2,15 @@ services:
   _defaults:
     autowire: true
     autoconfigure: true
-    public: false
+    public: true
+
+PhilTenno\NewsPull\Controller\:
+  resource: '../../Controller'
+  tags: ['controller.service_arguments']
 
 PhilTenno\NewsPull\:
-  resource: '../src/*'
-  exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+  resource: '../../*'
+  exclude: '../../{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
 
 PhilTenno\NewsPull\Service\NewsImportService:
   arguments:
