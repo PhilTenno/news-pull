@@ -2,6 +2,7 @@
 
 namespace PhilTenno\NewsPull\Service;
 
+use Doctrine\DBAL\Connection;
 use Contao\StringUtil;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\NewsModel;
