@@ -20,38 +20,50 @@ use Contao\Config;
 class NewsImportService
 {
     private string $projectDir;
-    private string $uploadDir;
     private string $imageDir;
     private EntityManagerInterface $entityManager;
     private ValidatorInterface $validator;
     private LoggerInterface $logger;
     private Filesystem $filesystem;
+    private ContaoFramework $framework;
 
     public function __construct(
         #[Autowire('%kernel.project_dir%')] string $projectDir,
-        #[Autowire('%env(NEWS_PULL_UPLOAD_DIR)%')] string $uploadDir,
         string $imageDir,
         EntityManagerInterface $entityManager,
         ValidatorInterface $validator,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ContaoFramework $framework
     ) {
         $this->projectDir = $projectDir;
-        $this->uploadDir = $uploadDir;
         $this->imageDir = $imageDir;
         $this->entityManager = $entityManager;
         $this->validator = $validator;
         $this->logger = $logger;
         $this->filesystem = new Filesystem();
+        $this->framework = $framework;
+    }
+
+    /**
+     * Holt den Upload-Ordner aus der Contao-Konfiguration
+     */
+    private function getUploadDir(): string
+    {
+        $this->framework->initialize();
+        $uploadDir = Config::get('newsPullUploadDir'); // Passe den Key ggf. an!
+        if (!$uploadDir) {
+            $this->logger->error('Kein Upload-Ordner in den Contao-Einstellungen gesetzt!');
+            throw new \RuntimeException('Upload-Ordner nicht konfiguriert.');
+        }
+        return $uploadDir;
     }
 
     public function importNews(): void
     {
-
-        // Logging direkt am Anfang der Methode
         $this->logger->info('NewsImportService: importNews() wurde aufgerufen');
 
-
-        $uploadPath = $this->projectDir . '/web/' . $this->uploadDir;
+        $uploadDir = $this->getUploadDir();
+        $uploadPath = $this->projectDir . '/web/' . $uploadDir;
 
         if (!is_dir($uploadPath)) {
             $this->logger->error('Upload directory does not exist: ' . $uploadPath);
@@ -101,21 +113,16 @@ class NewsImportService
 
     private function createNewsArticle(array $newsData, ?string $imageFile): void
     {
-        // Hole die Archiv-ID aus den Contao-Einstellungen
         $archiveId = Config::get('news_pull_news_archive');
-        
         if (!$archiveId) {
             throw new \Exception('No news archive configured in settings. Please select a news archive in the backend settings.');
         }
 
-        // Hole das Nachrichtenarchiv
         $newsArchive = NewsArchiveModel::findByPk($archiveId);
-
         if (!$newsArchive) {
             throw new \Exception('Configured news archive (ID: ' . $archiveId . ') not found.');
         }
 
-        // Create the news article
         $news = new NewsModel();
         $news->pid = $newsArchive->id;
         $news->headline = $newsData['title'];
@@ -125,13 +132,11 @@ class NewsImportService
         $news->date = time();
         $news->time = time();
         $news->addImage = $imageFile !== null ? '1' : '';
-        // Prüfe die Auto-Publish Einstellung
         $news->published = Config::get('news_pull_auto_publish') ? '1' : '';
         $news->metaTitle = $newsData['title'];
         $news->metaDescription = $newsData['teaser'];
         $news->save();
 
-        // Create content elements
         $this->createTextElement($news->id, 'teaser', $newsData['teaser']);
 
         if ($imageFile) {
@@ -176,14 +181,13 @@ class NewsImportService
         $newPath = $this->imageDir . '/' . $imageName;
         $newFullPath = $this->projectDir . '/web' . $newPath;
 
-        // Ensure the image directory exists
         if (!is_dir($this->projectDir . '/web' . $this->imageDir)) {
             (new Folder(str_replace('/files/', '', $this->imageDir)))->unprotect();
         }
 
         $this->filesystem->copy($imageFile, $newFullPath, true);
 
-        return str_replace('/files/', '', $newPath); // Return path relative to /files/
+        return str_replace('/files/', '', $newPath);
     }
 
     private function validateJson(array $newsData): void
