@@ -10,6 +10,8 @@
         }
     },
     "require": {
+        "contao/manager-plugin": "^2.0",
+        "contao/core-bundle": "^5.3",
         "php": "^8.2",
         "contao/core-bundle": "^5.3",
         "symfony/config": "^6.0 || ^7.0",
