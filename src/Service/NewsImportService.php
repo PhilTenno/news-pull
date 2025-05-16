@@ -171,19 +171,21 @@ class NewsImportService
             $absoluteTarget = $this->projectDir . '/' . $targetPath;
 
             try {
-                // Symfony Filesystem zum Kopieren verwenden
-                $filesystem = new \Symfony\Component\Filesystem\Filesystem();
-                $filesystem->copy($sourcePath, $absoluteTarget);
+            // 1. Datei physisch kopieren
+                    $filesystem = new \Symfony\Component\Filesystem\Filesystem();
+                    $filesystem->copy($sourcePath, $absoluteTarget);
 
-                // FilesModel anlegen und speichern
-                $fileModel = new \Contao\FilesModel();
-                $fileModel->path = $targetPath;
-                $fileModel->type = 'file';
-                $fileModel->uuid = \Contao\StringUtil::uuidToBin(\Symfony\Component\Uid\Uuid::v4()->toRfc4122());
-                $fileModel->tstamp = time();
-                $fileModel->save();
-
-                return \Contao\StringUtil::binToUuid($fileModel->uuid);
+            // 2. In Contao-Datenbank registrieren (Synchronisierung)
+                    $fileModel = FilesModel::findByPath($targetPath);
+                    if (!$fileModel) {
+                        $fileModel = new FilesModel();
+                        $fileModel->path = $targetPath;
+                        $fileModel->type = 'file';
+                        $fileModel->uuid = StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
+                        $fileModel->tstamp = time();
+                        $fileModel->save();
+                    }
+                    return StringUtil::binToUuid($fileModel->uuid);
 
             } catch (\Exception $e) {
                 $this->logger->error('Fehler beim Bildimport: ' . $e->getMessage());
