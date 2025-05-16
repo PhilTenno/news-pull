@@ -1,4 +1,5 @@
 news_pull_import:
-  path: /news-pull/import
-  controller: PhilTenno\NewsPull\Controller\PublicImportController
-  methods: [GET]
+    path: /news-pull/import
+    controller: PhilTenno\NewsPull\Controller\PublicImportController::importAction
+    defaults:
+        _scope: frontend  # Wichtig für Contao-Routing

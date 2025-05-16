@@ -1,9 +1,15 @@
-# config/services.yaml
 services:
+    # Controller als Service registrieren
+    PhilTenno\NewsPull\Controller\PublicImportController:
+        arguments:
+            - '@PhilTenno\NewsPull\Service\NewsImportService'
+            - '@logger'
+        tags: ['controller.service_arguments']
+
+    # NewsImportService (falls nicht automatisch via Autowiring)
     PhilTenno\NewsPull\Service\NewsImportService:
         arguments:
             - '@Contao\CoreBundle\Filesystem\VirtualFilesystemInterface'
             - '%kernel.project_dir%'
             - '@logger'
             - '@Contao\CoreBundle\Framework\ContaoFramework'
-        tags: ['container.service_subscriber']
