@@ -1,31 +1,9 @@
+# config/services.yaml
 services:
-  _defaults:
-    autowire: true
-    autoconfigure: true
-    public: true
-  
-  PhilTenno\NewsPull\Controller\:
-    resource: '../../Controller'
-    tags: ['controller.service_arguments']
-  
-  PhilTenno\NewsPull\:
-    resource: '../../*'
-    exclude: '../../{DependencyInjection,Entity,Migrations,Tests,Kernel.php,Resources}'
-  
-  PhilTenno\NewsPull\Service\NewsImportService:
-    arguments:
-      $projectDir: '%kernel.project_dir%'
-      $entityManager: '@doctrine.orm.entity_manager'
-      $validator: '@validator'
-      $logger: '@monolog.logger.contao'
-  
-  PhilTenno\NewsPull\Controller\BackendController:
-    public: true
-    arguments:
-      $newsImportService: '@PhilTenno\NewsPull\Service\NewsImportService'
-      $formFactory: '@form.factory'
-      
-  PhilTenno\NewsPull\Controller\PublicImportController:
-    public: true
-    arguments:
-        $newsImportService: '@PhilTenno\NewsPull\Service\NewsImportService'    
+    PhilTenno\NewsPull\Service\NewsImportService:
+        arguments:
+            - '@Contao\CoreBundle\Filesystem\VirtualFilesystemInterface'
+            - '%kernel.project_dir%'
+            - '@logger'
+            - '@Contao\CoreBundle\Framework\ContaoFramework'
+        tags: ['container.service_subscriber']

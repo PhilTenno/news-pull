@@ -7,15 +7,10 @@ use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\Config\FileLocator;
 use Contao\CoreBundle\Filesystem\VirtualFilesystemInterface;
-
 class PhilTennoNewsPullExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container)
     {
-        $loader = new YamlFileLoader(
-            $container,
-            new FileLocator(__DIR__.'/../Resources/config')
-        );
-        $loader->load('services.yaml');
+        // Konfiguration wird automatisch via services.yaml geladen
     }
 }

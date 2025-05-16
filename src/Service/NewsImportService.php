@@ -21,6 +21,9 @@ use Contao\Config;
 use Contao\FilesModel;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Symfony\Component\Uid\Uuid;
+use Contao\CoreBundle\Filesystem\VirtualFilesystemInterface;
+
+
 
 class NewsImportService
 {
@@ -33,20 +36,25 @@ class NewsImportService
     private Connection $connection;
 
     public function __construct(
-        #[Autowire('%kernel.project_dir%')] string $projectDir,
-        EntityManagerInterface $entityManager,
-        ValidatorInterface $validator,
-        LoggerInterface $logger,
-        ContaoFramework $framework,
-        Connection $connection
+        private VirtualFilesystemInterface $filesystem,
+        private string $projectDir,
+        private LoggerInterface $logger,
+        private ContaoFramework $framework
     ) {
-        $this->projectDir = $projectDir;
-        $this->entityManager = $entityManager;
-        $this->validator = $validator;
-        $this->logger = $logger;
-        $this->filesystem = new Filesystem();
-        $this->framework = $framework;
-        $this->connection = $connection;
+        $this->framework->initialize();
+    }
+
+    private function copyImage(string $sourcePath): ?string
+    {
+        $targetPath = 'files/news_import/' . uniqid() . '_' . basename($sourcePath);
+        
+        try {
+            $this->filesystem->writeStream($targetPath, fopen($sourcePath, 'r'));
+            return StringUtil::binToUuid($this->filesystem->getUuid($targetPath));
+        } catch (\Exception $e) {
+            $this->logger->error('Bildimport fehlgeschlagen: ' . $e->getMessage());
+            return null;
+        }
     }
 
     public function importNews(?string $newsDir = null): void
