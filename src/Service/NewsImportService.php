@@ -133,6 +133,13 @@ class NewsImportService
                 $newsItem->time = strtotime($newsData['date']);
                 $newsItem->published = true;
                 $newsItem->pid = Config::get('news_pull_archive');
+                if (!$newsItem->pid) {
+                    $this->logger->error(
+                        'Kein News-Archiv in der Konfiguration gesetzt!',
+                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                    );
+                    throw new \RuntimeException('News-Archiv nicht konfiguriert.');
+                }
 
                 // Bild importieren wenn vorhanden
                 if (isset($newsData['image'])) {
@@ -146,7 +153,13 @@ class NewsImportService
                     if ($uuid !== null) {
                         $newsItem->addImage = true;
                         $newsItem->singleSRC = $uuid;
+                        $this->logger->info(
+                            'UUID für Bild erfolgreich gesetzt: ' . $uuid,
+                            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+                        );
                     } else {
+                        $newsItem->addImage = false;
+                        $newsItem->singleSRC = null;
                         $this->logger->warning(
                             'Bild konnte nicht importiert werden: ' . $imageFile,
                             ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
@@ -154,13 +167,13 @@ class NewsImportService
                     }
                 }
 
-$this->logger->info(
-    'Speichere News: ' . $newsItem->headline . ', pid=' . $newsItem->pid . ', singleSRC=' . $newsItem->singleSRC . ', date=' . date('Y-m-d H:i:s', $newsItem->date),
-    ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-);
-                // News speichern
-                $newsItem->save();
 
+                // Logging vor dem Speichern
+                $this->logger->info(
+                    'Speichere News: ' . $newsItem->headline . ', pid=' . $newsItem->pid . ', singleSRC=' . $newsItem->singleSRC . ', date=' . date('Y-m-d H:i:s', $newsItem->date),
+                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+                );
+                $newsItem->save();
                 $this->logger->info(
                     'News erfolgreich importiert: ' . $newsData['title'],
                     ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
@@ -313,6 +326,11 @@ $this->logger->info(
             return null;
         }
 
+        // Sicherstellen, dass wirklich eine UUID zurückgegeben wird
+        if (empty($fileModel->uuid)) {
+            $this->logger->error('UUID für Bild nicht gefunden: ' . $newPath, ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]);
+            return null;
+        }
         return $fileModel->uuid;
     }
 
