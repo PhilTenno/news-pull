@@ -154,6 +154,10 @@ class NewsImportService
                     }
                 }
 
+$this->logger->info(
+    'Speichere News: ' . $newsItem->headline . ', pid=' . $newsItem->pid . ', singleSRC=' . $newsItem->singleSRC . ', date=' . date('Y-m-d H:i:s', $newsItem->date),
+    ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+);
                 // News speichern
                 $newsItem->save();
 
