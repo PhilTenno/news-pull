@@ -61,7 +61,6 @@ class NewsImportService
 
         $baseDir = $this->projectDir . '/' . $newsDir;
 
-        // Alle Unterordner durchlaufen
         $dirs = array_filter(glob($baseDir . '/*'), 'is_dir');
 
         foreach ($dirs as $dir) {
@@ -86,10 +85,8 @@ class NewsImportService
             }
 
             try {
-                // Direkt das einzelne News-Array validieren
                 $this->validateJson($newsData);
 
-                // Prüfen ob die News bereits existiert
                 $existingNews = NewsModel::findBy(
                     ['headline=?', 'date=?'],
                     [$newsData['title'], strtotime($newsData['date'])]
@@ -103,7 +100,6 @@ class NewsImportService
                     continue;
                 }
 
-                // Neue News anlegen
                 $newsItem = new NewsModel();
                 $newsItem->tstamp = time();
                 $newsItem->headline = $newsData['title'];
@@ -120,51 +116,29 @@ class NewsImportService
                     throw new \RuntimeException('News-Archiv nicht konfiguriert.');
                 }
 
-                // Bild importieren wenn vorhanden
+                // Bild importieren wenn vorhanden (nur hier)
+                $imageUuid = null;
                 if (isset($newsData['image'])) {
-                    $imagePath = $dir.'/'.$newsData['image'];
-                    $uuid = $this->copyImage($imagePath);
-                    
-                    if ($uuid) {
-                        $newsItem->singleSRC = $uuid;
-                        $newsItem->addImage = true;
+                    $imagePath = $dir . '/' . $newsData['image'];
+                    if (file_exists($imagePath)) {
+                        $imageUuid = $this->copyImage($imagePath);
+                        if ($imageUuid) {
+                            $newsItem->addImage = true;
+                            $newsItem->singleSRC = $imageUuid;
+                            $this->logger->info('Bild zugewiesen: ' . $imageUuid);
+                        }
+                    } else {
+                        $this->logger->warning('Bilddatei nicht gefunden: ' . $imagePath);
                     }
                 }
 
-                // Logging vor dem Speichern
                 $this->logger->info(
                     'Speichere News: ' . $newsItem->headline . ', pid=' . $newsItem->pid . ', singleSRC=' . $newsItem->singleSRC . ', date=' . date('Y-m-d H:i:s', $newsItem->date),
                     ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
                 );
-                
-                // Bild importieren wenn vorhanden
-                if (isset($newsData['image'])) {
-                    $imageFile = $dir . '/' . $newsData['image'];
-                    $this->logger->info(
-                        'Wert von $imageFile: ' . $imageFile,
-                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-                    );
 
-                    $uuid = $this->copyImage($imageFile);
-                    if ($uuid !== null) {
-                        $newsItem->addImage = true;
-                        $newsItem->singleSRC = $uuid;
-                        $this->logger->info(
-                            'UUID für Bild erfolgreich gesetzt: ' . $uuid,
-                            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-                        );
-                    } else {
-                        $newsItem->addImage = false;
-                        $newsItem->singleSRC = null;
-                        $this->logger->warning(
-                            'Bild konnte nicht importiert werden: ' . $imageFile,
-                            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-                        );
-                    }
-                }
+                $this->createNewsArticle($newsItem, $newsData, $imageUuid);
 
-                $this->createNewsArticle($newsItem, $newsData, isset($newsData['image']) ? $dir . '/' . $newsData['image'] : null);
-                
                 $newsItem->save();
 
                 $this->logger->info(
@@ -172,7 +146,6 @@ class NewsImportService
                     ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
                 );
 
-                // Ordner nach erfolgreichem Import löschen
                 $this->filesystem->remove($dir);
 
             } catch (\Exception $e) {
@@ -185,20 +158,14 @@ class NewsImportService
         }
     }
 
-    private function createNewsArticle(NewsModel $newsItem, array $newsData, ?string $imageFile): void
+    private function createNewsArticle(NewsModel $newsItem, array $newsData, ?string $imageUuid): void
     {
-        // Teaser
+        // Teaser-Text
         $this->createTextElement($newsItem->id, 'teaser', $newsData['teaser'] ?? '');
 
-        // Bild (falls vorhanden)
-        if ($imageFile && file_exists($imageFile)) {
-            $uuid = $this->copyImage($imageFile);
-            if ($uuid) {
-                $fileModel = FilesModel::findByUuid($uuid);
-                if ($fileModel) {
-                    $this->createImageElement($newsItem->id, $fileModel->path, $newsData['image_alt'] ?? '');
-                }
-            }
+        // Bild-Element nur mit UUID, kein Kopieren mehr
+        if ($imageUuid) {
+            $this->createImageElement($newsItem->id, $imageUuid, $newsData['image_alt'] ?? '');
         }
 
         // Haupttext
@@ -217,23 +184,13 @@ class NewsImportService
         $contentElement->save();
     }
 
-    private function createImageElement(int $newsId, string $imageFile, string $altText): void
+    private function createImageElement(int $newsId, string $imageUuid, string $altText): void
     {
-        $this->framework->initialize();
-        $fileModel = FilesModel::findByPath($imageFile);
-        if ($fileModel === null) {
-            $this->logger->error(
-                'Bild nicht gefunden in der Dateiverwaltung: ' . $imageFile,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \RuntimeException('Bild nicht gefunden: ' . $imageFile);
-        }
-
         $contentElement = new ContentModel();
         $contentElement->pid = $newsId;
         $contentElement->ptable = 'tl_news';
         $contentElement->type = 'image';
-        $contentElement->singleSRC = $fileModel->uuid; // <-- UUID speichern!
+        $contentElement->singleSRC = $imageUuid; // UUID direkt speichern
         $contentElement->alt = $altText;
         $contentElement->tstamp = time();
         $contentElement->imagemargin = serialize([
@@ -245,37 +202,26 @@ class NewsImportService
         ]);
         $contentElement->invisible = 0;
         $contentElement->save();
-    }
-
+}
     private function copyImage(string $sourcePath): ?string
     {
+        if (!file_exists($sourcePath)) {
+            $this->logger->error("Bild nicht gefunden: $sourcePath");
+            return null;
+        }
+
+        $uploadDir = FilesModel::findByUuid(Config::get('news_pull_upload_dir'));
+        if (!$uploadDir) {
+            $this->logger->error("Upload-Verzeichnis nicht konfiguriert");
+            return null;
+        }
+
+        $targetPath = $uploadDir->path . '/' . uniqid() . '_' . basename($sourcePath);
+        $absoluteTarget = $this->projectDir . '/' . $targetPath;
+
         try {
-            // 1. Pfadvalidierung
-            if (!file_exists($sourcePath)) {
-                throw new \RuntimeException("Bilddatei nicht gefunden: $sourcePath");
-            }
+            $this->filesystem->copy($sourcePath, $absoluteTarget);
 
-            // 2. Upload-Verzeichnis aus Backend-Konfiguration
-            $uploadDir = FilesModel::findByUuid(Config::get('news_pull_upload_dir'));
-            if (!$uploadDir) {
-                throw new \RuntimeException("Upload-Verzeichnis nicht im Backend konfiguriert");
-            }
-
-            // 3. Zielpfad generieren (mit unique ID)
-            $targetPath = $uploadDir->path . '/' . uniqid() . '_' . basename($sourcePath);
-
-            if (!file_exists($sourcePath)) {
-                $this->logger->error("Bilddatei nicht gefunden: " . $sourcePath);
-                // Debug: Verzeichnisinhalt ausgeben
-                $this->logger->debug("Verzeichnisinhalt: " . print_r(scandir(dirname($sourcePath)), true));
-                return null;
-            }
-
-
-            // 4. Datei kopieren
-            $this->filesystem->copy($sourcePath, $this->projectDir . '/' . $targetPath);
-
-            // 5. In Contao registrieren
             $fileModel = new FilesModel();
             $fileModel->path = $targetPath;
             $fileModel->type = 'file';
@@ -286,10 +232,10 @@ class NewsImportService
             return StringUtil::binToUuid($fileModel->uuid);
 
         } catch (\Exception $e) {
-            $this->logger->error("Bildimport fehlgeschlagen: " . $e->getMessage());
+            $this->logger->error("Fehler beim Anlegen des FilesModel: " . $e->getMessage());
             return null;
         }
-    }
+    }   
 
     private function validateJson(array $newsData): void
     {
@@ -324,11 +270,6 @@ class NewsImportService
             );
             throw new \Exception('Invalid language code: ' . $newsData['lang']);
         }
-    }
-    private function generateFileUuid(): string
-    {
-        // Contao 5.3 Standardweg (wie in contao/core-bundle)
-        return StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
     }
 
 }
