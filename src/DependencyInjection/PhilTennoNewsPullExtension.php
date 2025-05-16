@@ -11,6 +11,10 @@ class PhilTennoNewsPullExtension extends Extension
 {
     public function load(array $configs, ContainerBuilder $container): void
     {
+
+        file_put_contents(__DIR__ . '/../../../../extension_loaded.txt', 'Extension loaded: ' . date('c'));
+
+
         $loader = new YamlFileLoader(
             $container,
             new FileLocator(__DIR__ . '/../Resources/config')
