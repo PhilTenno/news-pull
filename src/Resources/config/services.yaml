@@ -1,12 +1,20 @@
 services:
-    # Controller als Service registrieren
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    PhilTenno\NewsPull\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Tests/'
+
     PhilTenno\NewsPull\Controller\PublicImportController:
-        arguments:
-            - '@PhilTenno\NewsPull\Service\NewsImportService'
-            - '@logger'
+        public: true
         tags: ['controller.service_arguments']
 
-    # NewsImportService (falls nicht automatisch via Autowiring)
     PhilTenno\NewsPull\Service\NewsImportService:
         arguments:
             - '@Contao\CoreBundle\Filesystem\VirtualFilesystemInterface'
