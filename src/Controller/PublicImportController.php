@@ -23,7 +23,7 @@ class PublicImportController
 
     public function importAction(): Response
     {
-    // ... hier dein Import-Code ...
-    return new Response('Import erfolgreich!');
+        $result = $this->newsImportService->importNews();
+        return new Response('Import erfolgreich! Ergebnis: ' . $result);
     }
 }
