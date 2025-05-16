@@ -49,28 +49,6 @@ class NewsImportService
         $this->connection = $connection;
     }
 
-    private function getUploadDir(): string
-    {
-        $this->framework->initialize();
-        $uuid = Config::get('news_pull_upload_dir');
-        if (!$uuid) {
-            $this->logger->error(
-                'Kein Upload-Ordner in den Contao-Einstellungen gesetzt!',
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \RuntimeException('Upload-Ordner nicht konfiguriert.');
-        }
-        $fileModel = FilesModel::findByUuid($uuid);
-        if ($fileModel === null) {
-            $this->logger->error(
-                'Upload-Ordner-UUID nicht gefunden: ' . $uuid,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \RuntimeException('Upload-Ordner-UUID nicht gefunden.');
-        }
-        return $fileModel->path;
-    }
-
     public function importNews(?string $newsDir = null): void
     {
         $this->framework->initialize();
@@ -144,17 +122,12 @@ class NewsImportService
 
                 // Bild importieren wenn vorhanden
                 if (isset($newsData['image'])) {
-                    $imagePath = $dir . '/' . $newsData['image'];
+                    $imagePath = $dir.'/'.$newsData['image'];
+                    $uuid = $this->copyImage($imagePath);
                     
-                    if (file_exists($imagePath)) {
-                        $uuid = $this->copyImage($imagePath);
-                        if ($uuid) {
-                            $newsItem->addImage = true;
-                            $newsItem->singleSRC = $uuid;
-                            $this->logger->info('Bild zugewiesen: ' . $uuid);
-                        }
-                    } else {
-                        $this->logger->warning('Bilddatei nicht gefunden: ' . $imagePath);
+                    if ($uuid) {
+                        $newsItem->singleSRC = $uuid;
+                        $newsItem->addImage = true;
                     }
                 }
 
@@ -279,38 +252,33 @@ class NewsImportService
         try {
             // 1. Pfadvalidierung
             if (!file_exists($sourcePath)) {
-                throw new \RuntimeException("Quelldatei nicht gefunden: $sourcePath");
+                throw new \RuntimeException("Bilddatei nicht gefunden: $sourcePath");
             }
 
-            // 2. Zielverzeichnis aus Contao-Konfig
+            // 2. Upload-Verzeichnis aus Backend-Konfiguration
             $uploadDir = FilesModel::findByUuid(Config::get('news_pull_upload_dir'));
             if (!$uploadDir) {
-                throw new \RuntimeException("Upload-Verzeichnis nicht konfiguriert");
+                throw new \RuntimeException("Upload-Verzeichnis nicht im Backend konfiguriert");
             }
 
-            // 3. Zielpfad mit unique Präfix
-            $targetPath = sprintf(
-                '%s/%s_%s',
-                $uploadDir->path,
-                uniqid(),
-                basename($sourcePath)
-            );
+            // 3. Zielpfad generieren (mit unique ID)
+            $targetPath = $uploadDir->path . '/' . uniqid() . '_' . basename($sourcePath);
 
             // 4. Datei kopieren
-            $this->filesystem->copy($sourcePath, $this->projectDir.'/'.$targetPath);
+            $this->filesystem->copy($sourcePath, $this->projectDir . '/' . $targetPath);
 
             // 5. In Contao registrieren
             $fileModel = new FilesModel();
             $fileModel->path = $targetPath;
             $fileModel->type = 'file';
-            $fileModel->uuid = $this->generateUuid();
+            $fileModel->uuid = StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
             $fileModel->tstamp = time();
             $fileModel->save();
 
             return StringUtil::binToUuid($fileModel->uuid);
 
         } catch (\Exception $e) {
-            $this->logger->error("Bildimport fehlgeschlagen: ".$e->getMessage());
+            $this->logger->error("Bildimport fehlgeschlagen: " . $e->getMessage());
             return null;
         }
     }
@@ -349,8 +317,9 @@ class NewsImportService
             throw new \Exception('Invalid language code: ' . $newsData['lang']);
         }
     }
-    private function generateUuid(): string
+    private function generateFileUuid(): string
     {
+        // Contao 5.3 Standardweg (wie in contao/core-bundle)
         return StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
     }
 
