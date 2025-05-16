@@ -70,37 +70,55 @@ class NewsImportService
         return $fileModel->path;
     }
 
-    public function importNews(string $newsDir): void
+    public function importNews(?string $newsDir = null): void
     {
-        $this->logger->info(
-            'NewsImportService: Import start',
-            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-        );
+        $this->framework->initialize();
 
-        $jsonFile = $newsDir . '/news.json';
-        if (!file_exists($jsonFile)) {
-            throw new \RuntimeException('news.json nicht gefunden in: ' . $jsonFile);
+        if ($newsDir === null) {
+            $uuid = Config::get('news_pull_upload_dir');
+            $fileModel = FilesModel::findByUuid($uuid);
+            $newsDir = $fileModel->path;
         }
 
-        $jsonContent = file_get_contents($jsonFile);
-        $newsData = json_decode($jsonContent, true);
+        $baseDir = $this->projectDir . '/' . $newsDir;
 
-        if (!is_array($newsData)) {
-            throw new \RuntimeException('Ungültiges JSON-Format in: ' . $jsonFile);
-        }
+        // Alle Unterordner durchlaufen
+        $dirs = array_filter(glob($baseDir . '/*'), 'is_dir');
 
-        foreach ($newsData as $item) {
+        foreach ($dirs as $dir) {
+            $jsonFile = $dir . '/news.json';
+            if (!file_exists($jsonFile)) {
+                $this->logger->warning(
+                    'Keine news.json in: ' . $dir,
+                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+                );
+                continue;
+            }
+
+            $jsonContent = file_get_contents($jsonFile);
+            $newsData = json_decode($jsonContent, true);
+
+            if (!is_array($newsData)) {
+                $this->logger->error(
+                    'Ungültiges JSON-Format in: ' . $jsonFile,
+                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                );
+                continue;
+            }
+
             try {
-                $this->validateJson($item); 
+                // Direkt das einzelne News-Array validieren
+                $this->validateJson($newsData);
+
                 // Prüfen ob die News bereits existiert
                 $existingNews = NewsModel::findBy(
                     ['headline=?', 'date=?'],
-                    [$item['headline'], strtotime($item['date'])]
+                    [$newsData['title'], strtotime($newsData['date'])]
                 );
 
                 if ($existingNews !== null) {
                     $this->logger->info(
-                        'News existiert bereits: ' . $item['headline'],
+                        'News existiert bereits: ' . $newsData['title'],
                         ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
                     );
                     continue;
@@ -109,25 +127,30 @@ class NewsImportService
                 // Neue News anlegen
                 $newsItem = new NewsModel();
                 $newsItem->tstamp = time();
-                $newsItem->headline = $item['headline'];
-                $newsItem->alias = StringUtil::generateAlias($item['headline']);
-                $newsItem->date = strtotime($item['date']);
-                $newsItem->time = strtotime($item['date']);
+                $newsItem->headline = $newsData['title'];
+                $newsItem->alias = StringUtil::generateAlias($newsData['title']);
+                $newsItem->date = strtotime($newsData['date']);
+                $newsItem->time = strtotime($newsData['date']);
                 $newsItem->published = true;
                 $newsItem->pid = Config::get('news_pull_archive');
 
                 // Bild importieren wenn vorhanden
-                if (isset($item['image'])) {
-                    $imageFile = $newsDir . '/' . $item['image'];
+                if (isset($newsData['image'])) {
+                    $imageFile = $dir . '/' . $newsData['image'];
                     $this->logger->info(
-                        'Wert von $imageFile: \'' . $imageFile . '\'',
+                        'Wert von $imageFile: ' . $imageFile,
                         ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
                     );
-                    
+
                     $uuid = $this->copyImage($imageFile);
                     if ($uuid !== null) {
                         $newsItem->addImage = true;
                         $newsItem->singleSRC = $uuid;
+                    } else {
+                        $this->logger->warning(
+                            'Bild konnte nicht importiert werden: ' . $imageFile,
+                            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+                        );
                     }
                 }
 
@@ -135,21 +158,26 @@ class NewsImportService
                 $newsItem->save();
 
                 $this->logger->info(
-                    'News erfolgreich importiert: ' . $item['headline'],
+                    'News erfolgreich importiert: ' . $newsData['title'],
                     ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
                 );
 
+                // Ordner nach erfolgreichem Import löschen
+                $this->filesystem->remove($dir);
+
             } catch (\Exception $e) {
                 $this->logger->error(
-                    'Error creating news article from directory: ' . $newsDir . ' - ' . $e->getMessage(),
+                    'Fehler beim Import aus ' . $dir . ': ' . $e->getMessage(),
                     ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
                 );
+                // Ordner NICHT löschen, damit du den Fehler später prüfen kannst
             }
         }
     }
 
     private function createNewsArticle(array $newsData, ?string $imageFile): void
     {
+        $this->framework->initialize();
         $this->logger->info(
             'Wert von $imageFile: ' . var_export($imageFile, true),
             ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
@@ -157,11 +185,19 @@ class NewsImportService
 
         $archiveId = Config::get('news_pull_news_archive');
         if (!$archiveId) {
+            $this->logger->error(
+                'No news archive configured in settings. Please select a news archive in the backend settings.',
+                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+            );
             throw new \Exception('No news archive configured in settings. Please select a news archive in the backend settings.');
         }
 
         $newsArchive = NewsArchiveModel::findByPk($archiveId);
         if (!$newsArchive) {
+            $this->logger->error(
+                'Configured news archive (ID: ' . $archiveId . ') not found.',
+                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+            );
             throw new \Exception('Configured news archive (ID: ' . $archiveId . ') not found.');
         }
 
@@ -208,10 +244,13 @@ class NewsImportService
 
     private function createImageElement(int $newsId, string $imageFile, string $altText): void
     {
-        // $imageFile ist der relative Pfad, z.B. 'files/News-Upload/Landschaft-bei-Meissen-im-Sommer.jpg'
+        $this->framework->initialize();
         $fileModel = FilesModel::findByPath($imageFile);
         if ($fileModel === null) {
-            $this->logger->error('Bild nicht gefunden in der Dateiverwaltung: ' . $imageFile);
+            $this->logger->error(
+                'Bild nicht gefunden in der Dateiverwaltung: ' . $imageFile,
+                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+            );
             throw new \RuntimeException('Bild nicht gefunden: ' . $imageFile);
         }
 
@@ -237,44 +276,36 @@ class NewsImportService
     {
         $this->framework->initialize();
 
-        // Zielverzeichnis aus der Konfiguration holen (enthält bereits 'files/...')
         $uuid = Config::get('news_pull_upload_dir');
         $fileModel = FilesModel::findByUuid($uuid);
         if ($fileModel === null) {
-            $this->logger->error('Upload-Ordner-UUID nicht gefunden: ' . $uuid);
+            $this->logger->error('Upload-Ordner-UUID nicht gefunden: ' . $uuid, ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]);
             return null;
         }
 
         $imageDir = $fileModel->path; // z.B. 'files/contaodemo/News-Images'
         $imageName = basename($imageFile);
-        $newPath = $imageDir . '/' . $imageName; // z.B. 'files/contaodemo/News-Images/Landschaft-bei-Meissen-im-Sommer.jpg'
+        $newPath = $imageDir . '/' . $imageName; // z.B. 'files/contaodemo/News-Images/Landschaft.jpg'
         $newFullPath = $this->projectDir . '/' . $newPath;
 
-        // Prüfen, ob die Quelldatei existiert
         if (!file_exists($imageFile)) {
-            $this->logger->error('Quelldatei existiert nicht: ' . $imageFile);
+            $this->logger->error('Quelldatei existiert nicht: ' . $imageFile, ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]);
             return null;
         }
 
-        // Zielverzeichnis anlegen, falls nicht vorhanden
-        $targetDir = dirname($newFullPath);
-        if (!is_dir($targetDir)) {
+        if (!is_dir(dirname($newFullPath))) {
             (new Folder($imageDir))->unprotect();
         }
 
-        // Datei kopieren (überschreibt ggf. vorhandene Datei)
-        if (!file_exists($newFullPath)) {
-            $this->filesystem->copy($imageFile, $newFullPath, true);
-        }
+        $this->filesystem->copy($imageFile, $newFullPath, true);
 
-        // Datei im DCA registrieren (wichtig für die UUID!)
+        // Datei im Contao-Dateisystem registrieren
         $file = new File($newPath);
         $file->close();
 
-        // UUID der kopierten Datei holen
         $fileModel = FilesModel::findByPath($newPath);
         if ($fileModel === null) {
-            $this->logger->error('Keine FilesModel-Instanz für ' . $newPath . ' gefunden');
+            $this->logger->error('Keine FilesModel-Instanz für ' . $newPath . ' gefunden', ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]);
             return null;
         }
 
@@ -284,18 +315,34 @@ class NewsImportService
     private function validateJson(array $newsData): void
     {
         if (empty($newsData['title'])) {
+            $this->logger->error(
+                'Title is required',
+                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+            );
             throw new \Exception('Title is required');
         }
 
         if (empty($newsData['teaser'])) {
+            $this->logger->error(
+                'Teaser is required',
+                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+            );
             throw new \Exception('Teaser is required');
         }
 
         if (empty($newsData['text'])) {
+            $this->logger->error(
+                'Text is required',
+                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+            );
             throw new \Exception('Text is required');
         }
 
         if (!empty($newsData['lang']) && !in_array($newsData['lang'], ['de', 'en'])) {
+            $this->logger->error(
+                'Invalid language code: ' . $newsData['lang'],
+                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+            );
             throw new \Exception('Invalid language code: ' . $newsData['lang']);
         }
     }
