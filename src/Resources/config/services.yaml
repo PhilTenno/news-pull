@@ -18,7 +18,7 @@ services:
       $imageDir: '/files/News-Pull-Images' # Festes Bilderverzeichnis
       $entityManager: '@doctrine.orm.entity_manager'
       $validator: '@validator'
-      $logger: '@logger'
+      $logger: '@monolog.logger.contao'
   
   PhilTenno\NewsPull\Controller\BackendController:
     public: true
