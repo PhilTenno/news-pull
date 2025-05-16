@@ -15,7 +15,6 @@ services:
   PhilTenno\NewsPull\Service\NewsImportService:
     arguments:
       $projectDir: '%kernel.project_dir%'
-      $imageDir: '/files/News-Pull-Images' # Festes Bilderverzeichnis
       $entityManager: '@doctrine.orm.entity_manager'
       $validator: '@validator'
       $logger: '@monolog.logger.contao'
