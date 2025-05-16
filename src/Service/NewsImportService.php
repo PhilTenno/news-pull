@@ -143,6 +143,7 @@ class NewsImportService
         $news->teaser = $newsData['teaser'];
         $news->date = time();
         $news->time = time();
+        $news->tstamp = time();
         $news->addImage = $imageFile !== null ? 1 : 0;
         $news->published = Config::get('news_pull_auto_publish') ? 1 : 0;
         $news->metaTitle = $newsData['title'];
@@ -166,7 +167,8 @@ class NewsImportService
         $contentElement->ptable = 'tl_news';
         $contentElement->type = 'text';
         $contentElement->text = $text;
-        $contentElement->published = 1;
+        $contentElement->invisible = 0;
+        $contentElement->tstamp = time();
         $contentElement->save();
     }
 
@@ -178,6 +180,7 @@ class NewsImportService
         $contentElement->type = 'image';
         $contentElement->singleSRC = $imageFile;
         $contentElement->alt = $altText;
+        $contentElement->tstamp = time();
         $contentElement->imagemargin = serialize([
             'top' => '0',
             'right' => '0',
@@ -185,6 +188,7 @@ class NewsImportService
             'left' => '0',
             'unit' => 'px'
         ]);
+        $contentElement->invisible = 0;
         $contentElement->save();
     }
 
