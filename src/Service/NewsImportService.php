@@ -15,17 +15,21 @@ use Symfony\Component\Uid\Uuid;
 
 class NewsImportService
 {
-    private Filesystem $symfonyFilesystem;
+   private VirtualFilesystemInterface $filesystem;
+    private string $projectDir;
+    private LoggerInterface $logger;
+    private ContaoFramework $framework;
 
     public function __construct(
-        private VirtualFilesystemInterface $filesystem,
-        private ContaoFramework $framework,
-        private LoggerInterface $logger,
-        #[\Symfony\Component\DependencyInjection\Attribute\Autowire('%kernel.project_dir%')]
-        private string $projectDir
+        VirtualFilesystemInterface $filesystem,
+        string $projectDir,
+        LoggerInterface $logger,
+        ContaoFramework $framework
     ) {
-        $this->symfonyFilesystem = new Filesystem();
-        $this->framework->initialize();
+        $this->filesystem = $filesystem;
+        $this->projectDir = $projectDir;
+        $this->logger = $logger;
+        $this->framework = $framework;
     }
 
     public function importNews(?string $newsDir = null): void
@@ -108,7 +112,7 @@ class NewsImportService
 
                 $this->logger->info('News erfolgreich importiert: ' . $newsData['title']);
 
-                $this->symfonyFilesystem->remove($dir);
+                $this->filesystem->delete($dir);
 
             } catch (\Exception $e) {
                 $this->logger->error('Fehler beim Import aus ' . $dir . ': ' . $e->getMessage());

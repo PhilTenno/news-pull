@@ -1,23 +1,22 @@
 services:
-  _defaults:
-    autowire: true
-    autoconfigure: true
-    public: false
+    PhilTenno\NewsPull\Controller\PublicImportController:
+        public: true
+        arguments:
+            - '@PhilTenno\NewsPull\Service\NewsImportService'
+            - '@logger'
+        tags: ['controller.service_arguments']
 
-  PhilTenno\NewsPull\:
-    resource: '../../src/*'
-    exclude:
-      - '../../src/DependencyInjection/'
-      - '../../src/Entity/'
-      - '../../src/Tests/'
+    PhilTenno\NewsPull\Controller\BackendController:
+        public: true
+        arguments:
+            - '@PhilTenno\NewsPull\Service\NewsImportService'
+            - '@form.factory'
+            - '@router'
+        tags: ['controller.service_arguments']
 
-  PhilTenno\NewsPull\Controller\PublicImportController:
-      public: true
-      tags: ['controller.service_arguments']     
-
-  PhilTenno\NewsPull\Service\NewsImportService:
-    arguments:
-      - '@Contao\CoreBundle\Filesystem\VirtualFilesystemInterface'
-      - '%kernel.project_dir%'
-      - '@logger'
-      - '@Contao\CoreBundle\Framework\ContaoFramework'  
+    PhilTenno\NewsPull\Service\NewsImportService:
+        arguments:
+            $filesystem: '@contao.filesystem.virtual.files'
+            $projectDir: '%kernel.project_dir%'
+            $logger: '@logger'
+            $framework: '@Contao\CoreBundle\Framework\ContaoFramework'
