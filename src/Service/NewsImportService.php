@@ -68,6 +68,7 @@ class NewsImportService
 
     public function importNews(): void
     {
+        $this->logger->info('Import gestartet');
         $this->logger->info('NewsImportService: importNews() wurde aufgerufen');
 
         $uploadDir = $this->getUploadDir();
@@ -121,6 +122,7 @@ class NewsImportService
 
     private function createNewsArticle(array $newsData, ?string $imageFile): void
     {
+        $this->logger->info('Wert von $imageFile: ' . var_export($imageFile, true));
         $archiveId = Config::get('news_pull_news_archive');
         if (!$archiveId) {
             throw new \Exception('No news archive configured in settings. Please select a news archive in the backend settings.');
@@ -192,6 +194,7 @@ class NewsImportService
         $contentElement->save();
     }
 
+    /*
     private function copyImage(string $imageFile): string
     {
         $imageName = basename($imageFile);
@@ -206,6 +209,35 @@ class NewsImportService
 
         return str_replace('/files/', '', $newPath);
     }
+    */ 
+    private function copyImage(string $imageFile): string
+{
+    $imageName = basename($imageFile);
+    $newPath = $this->imageDir . '/' . $imageName;
+    $newFullPath = $this->projectDir . '/web' . $newPath;
+
+    // Logging für Debug
+    $this->logger->info('Kopiere Bild von ' . $imageFile . ' nach ' . $newFullPath);
+
+    if (!file_exists($imageFile)) {
+        $this->logger->error('Quelldatei existiert nicht: ' . $imageFile);
+        throw new \RuntimeException('Quelldatei existiert nicht: ' . $imageFile);
+    }
+
+    if (!is_dir($this->projectDir . '/web' . $this->imageDir)) {
+        $this->logger->info('Zielverzeichnis existiert nicht, wird angelegt: ' . $this->projectDir . '/web' . $this->imageDir);
+        (new Folder(str_replace('/files/', '', $this->imageDir)))->unprotect();
+    }
+
+    $this->filesystem->copy($imageFile, $newFullPath, true);
+
+    if (!file_exists($newFullPath)) {
+        $this->logger->error('Kopieren fehlgeschlagen: ' . $newFullPath);
+        throw new \RuntimeException('Kopieren fehlgeschlagen: ' . $newFullPath);
+    }
+
+    return str_replace('/files/', '', $newPath);
+    }  
 
     private function validateJson(array $newsData): void
     {
