@@ -16,8 +16,8 @@ services:
       tags: ['controller.service_arguments']
 
   PhilTenno\NewsPull\Service\NewsImportService:
-      arguments:
-          - '@Contao\CoreBundle\Filesystem\VirtualFilesystemInterface'
-          - '%kernel.project_dir%'
-          - '@logger'
-          - '@Contao\CoreBundle\Framework\ContaoFramework'
+    arguments:
+      - '@Contao\CoreBundle\Filesystem\VirtualFilesystemInterface'
+      - '%kernel.project_dir%'
+      - '@logger'
+      - '@Contao\CoreBundle\Framework\ContaoFramework'  
