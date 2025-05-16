@@ -70,77 +70,78 @@ class NewsImportService
         return $fileModel->path;
     }
 
-    public function importNews(): void
+    public function importNews(string $newsDir): void
     {
         $this->logger->info(
             'NewsImportService: Import start',
             ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
         );
 
-        $this->logger->info(
-            'NewsImportService: importNews() wurde aufgerufen',
-            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-        );
-
-        $uploadDir = $this->getUploadDir();
-        $uploadPath = $this->projectDir . '/web/' . $uploadDir;
-
-        if (!is_dir($uploadPath)) {
-            $this->logger->error(
-                'Upload directory does not exist: ' . $uploadPath,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            return;
+        $jsonFile = $newsDir . '/news.json';
+        if (!file_exists($jsonFile)) {
+            throw new \RuntimeException('news.json nicht gefunden in: ' . $jsonFile);
         }
 
-        $finder = new Finder();
-        $finder->directories()->in($uploadPath)->depth(0);
+        $jsonContent = file_get_contents($jsonFile);
+        $newsData = json_decode($jsonContent, true);
 
-        foreach ($finder as $directory) {
-            $newsDirectory = $directory->getRealPath();
-            $jsonFile = $newsDirectory . '/news.json';
-            $imageFile = null;
+        if (!is_array($newsData)) {
+            throw new \RuntimeException('Ungültiges JSON-Format in: ' . $jsonFile);
+        }
 
-            if (file_exists($newsDirectory . '/image.jpg')) {
-                $imageFile = $newsDirectory . '/image.jpg';
-            } elseif (file_exists($newsDirectory . '/image.jpeg')) {
-                $imageFile = $newsDirectory . '/image.jpeg';
-            } elseif (file_exists($newsDirectory . '/image.png')) {
-                $imageFile = $newsDirectory . '/image.png';
-            }
-
-            if (!file_exists($jsonFile)) {
-                $this->logger->error(
-                    'JSON file not found in directory: ' . $newsDirectory,
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-                );
-                continue;
-            }
-
-            $jsonContent = file_get_contents($jsonFile);
-
+        foreach ($newsData as $item) {
             try {
-                $newsData = json_decode($jsonContent, true, 512, JSON_THROW_ON_ERROR);
-                $this->validateJson($newsData);
-            } catch (\Exception $e) {
-                $this->logger->error(
-                    'Invalid JSON in file: ' . $jsonFile . ' - ' . $e->getMessage(),
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                $this->validateJson($item); 
+                // Prüfen ob die News bereits existiert
+                $existingNews = NewsModel::findBy(
+                    ['headline=?', 'date=?'],
+                    [$item['headline'], strtotime($item['date'])]
                 );
-                continue;
-            }
 
-            try {
-                $this->createNewsArticle($newsData, $imageFile);
-                $this->filesystem->remove($newsDirectory);
+                if ($existingNews !== null) {
+                    $this->logger->info(
+                        'News existiert bereits: ' . $item['headline'],
+                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+                    );
+                    continue;
+                }
+
+                // Neue News anlegen
+                $newsItem = new NewsModel();
+                $newsItem->tstamp = time();
+                $newsItem->headline = $item['headline'];
+                $newsItem->alias = StringUtil::generateAlias($item['headline']);
+                $newsItem->date = strtotime($item['date']);
+                $newsItem->time = strtotime($item['date']);
+                $newsItem->published = true;
+                $newsItem->pid = Config::get('news_pull_archive');
+
+                // Bild importieren wenn vorhanden
+                if (isset($item['image'])) {
+                    $imageFile = $newsDir . '/' . $item['image'];
+                    $this->logger->info(
+                        'Wert von $imageFile: \'' . $imageFile . '\'',
+                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+                    );
+                    
+                    $uuid = $this->copyImage($imageFile);
+                    if ($uuid !== null) {
+                        $newsItem->addImage = true;
+                        $newsItem->singleSRC = $uuid;
+                    }
+                }
+
+                // News speichern
+                $newsItem->save();
 
                 $this->logger->info(
-                    'Successfully imported news from directory: ' . $newsDirectory,
+                    'News erfolgreich importiert: ' . $item['headline'],
                     ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
                 );
+
             } catch (\Exception $e) {
                 $this->logger->error(
-                    'Error creating news article from directory: ' . $newsDirectory . ' - ' . $e->getMessage(),
+                    'Error creating news article from directory: ' . $newsDir . ' - ' . $e->getMessage(),
                     ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
                 );
             }
@@ -207,11 +208,18 @@ class NewsImportService
 
     private function createImageElement(int $newsId, string $imageFile, string $altText): void
     {
+        // $imageFile ist der relative Pfad, z.B. 'files/News-Upload/Landschaft-bei-Meissen-im-Sommer.jpg'
+        $fileModel = FilesModel::findByPath($imageFile);
+        if ($fileModel === null) {
+            $this->logger->error('Bild nicht gefunden in der Dateiverwaltung: ' . $imageFile);
+            throw new \RuntimeException('Bild nicht gefunden: ' . $imageFile);
+        }
+
         $contentElement = new ContentModel();
         $contentElement->pid = $newsId;
         $contentElement->ptable = 'tl_news';
         $contentElement->type = 'image';
-        $contentElement->singleSRC = $imageFile;
+        $contentElement->singleSRC = $fileModel->uuid; // <-- UUID speichern!
         $contentElement->alt = $altText;
         $contentElement->tstamp = time();
         $contentElement->imagemargin = serialize([
@@ -225,56 +233,52 @@ class NewsImportService
         $contentElement->save();
     }
 
-    private function copyImage(string $imageFile): string
+    private function copyImage(string $imageFile): ?string
     {
         $this->framework->initialize();
+
+        // Zielverzeichnis aus der Konfiguration holen (enthält bereits 'files/...')
         $uuid = Config::get('news_pull_upload_dir');
         $fileModel = FilesModel::findByUuid($uuid);
         if ($fileModel === null) {
-            $this->logger->error(
-                'Upload-Ordner-UUID nicht gefunden: ' . $uuid,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \RuntimeException('Upload-Ordner-UUID nicht gefunden.');
+            $this->logger->error('Upload-Ordner-UUID nicht gefunden: ' . $uuid);
+            return null;
         }
-        $imageDir = $fileModel->path;
 
+        $imageDir = $fileModel->path; // z.B. 'files/contaodemo/News-Images'
         $imageName = basename($imageFile);
-        $newPath = $imageDir . '/' . $imageName;
-        $newFullPath = $this->projectDir . '/web/' . $newPath;
+        $newPath = $imageDir . '/' . $imageName; // z.B. 'files/contaodemo/News-Images/Landschaft-bei-Meissen-im-Sommer.jpg'
+        $newFullPath = $this->projectDir . '/' . $newPath;
 
-        $this->logger->info(
-            'Kopiere Bild von ' . $imageFile . ' nach ' . $newFullPath,
-            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-        );
-
+        // Prüfen, ob die Quelldatei existiert
         if (!file_exists($imageFile)) {
-            $this->logger->error(
-                'Quelldatei existiert nicht: ' . $imageFile,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \RuntimeException('Quelldatei existiert nicht: ' . $imageFile);
+            $this->logger->error('Quelldatei existiert nicht: ' . $imageFile);
+            return null;
         }
 
-        if (!is_dir($this->projectDir . '/web/' . $imageDir)) {
-            $this->logger->info(
-                'Zielverzeichnis existiert nicht, wird angelegt: ' . $this->projectDir . '/web/' . $imageDir,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-            );
+        // Zielverzeichnis anlegen, falls nicht vorhanden
+        $targetDir = dirname($newFullPath);
+        if (!is_dir($targetDir)) {
             (new Folder($imageDir))->unprotect();
         }
 
-        $this->filesystem->copy($imageFile, $newFullPath, true);
-
+        // Datei kopieren (überschreibt ggf. vorhandene Datei)
         if (!file_exists($newFullPath)) {
-            $this->logger->error(
-                'Kopieren fehlgeschlagen: ' . $newFullPath,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \RuntimeException('Kopieren fehlgeschlagen: ' . $newFullPath);
+            $this->filesystem->copy($imageFile, $newFullPath, true);
         }
 
-        return str_replace('/files/', '', $newPath);
+        // Datei im DCA registrieren (wichtig für die UUID!)
+        $file = new File($newPath);
+        $file->close();
+
+        // UUID der kopierten Datei holen
+        $fileModel = FilesModel::findByPath($newPath);
+        if ($fileModel === null) {
+            $this->logger->error('Keine FilesModel-Instanz für ' . $newPath . ' gefunden');
+            return null;
+        }
+
+        return $fileModel->uuid;
     }
 
     private function validateJson(array $newsData): void
