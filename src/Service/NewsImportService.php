@@ -2,6 +2,7 @@
 
 namespace PhilTenno\NewsPull\Service;
 
+use Contao\FilesModel;
 use Contao\CoreBundle\Filesystem\VirtualFilesystemInterface;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\StringUtil;
