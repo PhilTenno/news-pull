@@ -118,17 +118,14 @@ class NewsImportService
 
                 // Bild importieren wenn vorhanden (nur hier)
                 $imageUuid = null;
+
                 if (isset($newsData['image'])) {
-                    $imagePath = $dir . '/' . $newsData['image'];
-                    if (file_exists($imagePath)) {
-                        $imageUuid = $this->copyImage($imagePath);
-                        if ($imageUuid) {
-                            $newsItem->addImage = true;
-                            $newsItem->singleSRC = $imageUuid;
-                            $this->logger->info('Bild zugewiesen: ' . $imageUuid);
-                        }
-                    } else {
-                        $this->logger->warning('Bilddatei nicht gefunden: ' . $imagePath);
+                    $imagePath = FilesystemUtil::normalizePath($dir . '/' . $newsData['image']);
+                    $uuid = $this->copyImage($imagePath);
+                    
+                    if ($uuid) {
+                        $newsItem->addImage = true;
+                        $newsItem->singleSRC = $uuid;
                     }
                 }
 
@@ -202,40 +199,31 @@ class NewsImportService
         ]);
         $contentElement->invisible = 0;
         $contentElement->save();
-}
+    }
+
     private function copyImage(string $sourcePath): ?string
     {
-        if (!file_exists($sourcePath)) {
-            $this->logger->error("Bild nicht gefunden: $sourcePath");
-            return null;
-        }
-
-        $uploadDir = FilesModel::findByUuid(Config::get('news_pull_upload_dir'));
-        if (!$uploadDir) {
-            $this->logger->error("Upload-Verzeichnis nicht konfiguriert");
-            return null;
-        }
-
-        $targetPath = $uploadDir->path . '/' . uniqid() . '_' . basename($sourcePath);
-        $absoluteTarget = $this->projectDir . '/' . $targetPath;
-
         try {
-            $this->filesystem->copy($sourcePath, $absoluteTarget);
+            $uploadDir = Config::get('news_pull_upload_dir');
+            if (!$uploadDir) {
+                throw new \RuntimeException('Upload-Verzeichnis nicht konfiguriert!');
+            }
 
-            $fileModel = new FilesModel();
-            $fileModel->path = $targetPath;
-            $fileModel->type = 'file';
-            $fileModel->uuid = StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
-            $fileModel->tstamp = time();
-            $fileModel->save();
+            $targetPath = FilesystemUtil::normalizePath(
+                $uploadDir . '/' . uniqid() . '_' . basename($sourcePath)
+            );
 
-            return StringUtil::binToUuid($fileModel->uuid);
+            // Datei kopieren und UUID automatisch generieren
+            $this->filesStorage->writeStream($targetPath, fopen($sourcePath, 'r'));
+            $uuid = $this->filesStorage->getUuid($targetPath);
+
+            return StringUtil::binToUuid($uuid);
 
         } catch (\Exception $e) {
-            $this->logger->error("Fehler beim Anlegen des FilesModel: " . $e->getMessage());
+            $this->logger->error("Bildimport fehlgeschlagen: " . $e->getMessage());
             return null;
         }
-    }   
+    }    
 
     private function validateJson(array $newsData): void
     {
