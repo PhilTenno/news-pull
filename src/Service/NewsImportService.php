@@ -276,30 +276,39 @@ class NewsImportService
 
     private function copyImage(string $sourcePath): ?string
     {
-        if (!file_exists($sourcePath)) {
-            $this->logger->error("Quelldatei nicht gefunden: $sourcePath");
-            return null;
-        }
-
-        $uploadDir = FilesModel::findByUuid(Config::get('news_pull_upload_dir'));
-        if (!$uploadDir) {
-            $this->logger->error("Upload-Verzeichnis nicht konfiguriert");
-            return null;
-        }
-
-        $targetPath = $uploadDir->path.'/'.basename($sourcePath);
-        
         try {
+            // 1. Pfadvalidierung
+            if (!file_exists($sourcePath)) {
+                throw new \RuntimeException("Quelldatei nicht gefunden: $sourcePath");
+            }
+
+            // 2. Zielverzeichnis aus Contao-Konfig
+            $uploadDir = FilesModel::findByUuid(Config::get('news_pull_upload_dir'));
+            if (!$uploadDir) {
+                throw new \RuntimeException("Upload-Verzeichnis nicht konfiguriert");
+            }
+
+            // 3. Zielpfad mit unique Präfix
+            $targetPath = sprintf(
+                '%s/%s_%s',
+                $uploadDir->path,
+                uniqid(),
+                basename($sourcePath)
+            );
+
+            // 4. Datei kopieren
             $this->filesystem->copy($sourcePath, $this->projectDir.'/'.$targetPath);
-            
+
+            // 5. In Contao registrieren
             $fileModel = new FilesModel();
             $fileModel->path = $targetPath;
             $fileModel->type = 'file';
-            $fileModel->uuid = $this->generateContaoUuid();
+            $fileModel->uuid = $this->generateUuid();
             $fileModel->tstamp = time();
             $fileModel->save();
 
             return StringUtil::binToUuid($fileModel->uuid);
+
         } catch (\Exception $e) {
             $this->logger->error("Bildimport fehlgeschlagen: ".$e->getMessage());
             return null;
@@ -340,9 +349,9 @@ class NewsImportService
             throw new \Exception('Invalid language code: ' . $newsData['lang']);
         }
     }
-
-    private function generateContaoUuid(): string
+    private function generateUuid(): string
     {
         return StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
     }
+
 }
