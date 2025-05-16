@@ -1,0 +1,33 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+PhilTenno\NewsPull\:
+  resource: '../src/*'
+  exclude: '../src/{DependencyInjection,Entity,Migrations,Tests,Kernel.php}'
+
+PhilTenno\NewsPull\Service\NewsImportService:
+  arguments:
+    $projectDir: '%kernel.project_dir%'
+    $uploadDir: '%env(NEWS_PULL_UPLOAD_DIR)%'
+    $imageDir: '/files/News-Pull-Images' # Festes Bilderverzeichnis
+    $entityManager: '@doctrine.orm.entity_manager'
+    $validator: '@validator'
+    $logger: '@monolog.logger.news_pull'
+
+PhilTenno\NewsPull\Controller\BackendController:
+  public: true
+  arguments:
+    $newsImportService: '@PhilTenno\NewsPull\Service\NewsImportService'
+    $formFactory: '@form.factory'
+    
+PhilTenno\NewsPull\Controller\PublicImportController:
+  public: true
+  arguments:
+      $newsImportService: '@PhilTenno\NewsPull\Service\NewsImportService'    
+
+monolog.logger.news_pull:
+  parent: monolog.logger
+  channels: ['news_pull']

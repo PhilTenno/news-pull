@@ -13,7 +13,7 @@ services:
 
   PhilTenno\NewsPull\Controller\PublicImportController:
       public: true
-      tags: ['controller.service_arguments']
+      tags: ['controller.service_arguments']     
 
   PhilTenno\NewsPull\Service\NewsImportService:
     arguments:

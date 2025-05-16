@@ -4,6 +4,7 @@ namespace PhilTenno\NewsPull\Controller;
 
 use PhilTenno\NewsPull\Service\NewsImportService;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -13,7 +14,7 @@ class PublicImportController extends AbstractController
         private NewsImportService $newsImportService,
         private LoggerInterface $logger
     ) {}
-
+    #[Route('/news-pull/import', name: 'news_pull_import', defaults: ['_scope' => 'frontend'])]
     public function importAction(): Response
     {
         try {

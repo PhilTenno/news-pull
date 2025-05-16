@@ -27,7 +27,7 @@ class BackendController extends AbstractController
         $this->router = $router;
     }
 
-    #[Route('/news-pull/import', name: 'news_pull_import')]
+    #[Route('/news-pull/import-backend', name: 'news_pull_import')]
     public function indexAction(Request $request): Response
     {
 
