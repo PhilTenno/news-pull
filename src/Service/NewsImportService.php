@@ -264,6 +264,14 @@ class NewsImportService
             // 3. Zielpfad generieren (mit unique ID)
             $targetPath = $uploadDir->path . '/' . uniqid() . '_' . basename($sourcePath);
 
+            if (!file_exists($sourcePath)) {
+                $this->logger->error("Bilddatei nicht gefunden: " . $sourcePath);
+                // Debug: Verzeichnisinhalt ausgeben
+                $this->logger->debug("Verzeichnisinhalt: " . print_r(scandir(dirname($sourcePath)), true));
+                return null;
+            }
+
+
             // 4. Datei kopieren
             $this->filesystem->copy($sourcePath, $this->projectDir . '/' . $targetPath);
 
