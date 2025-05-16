@@ -2,82 +2,54 @@
 
 namespace PhilTenno\NewsPull\Service;
 
-use Doctrine\DBAL\Connection;
-use Contao\StringUtil;
+use Contao\CoreBundle\Filesystem\VirtualFilesystemInterface;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\StringUtil;
+use Contao\Config;
 use Contao\NewsModel;
 use Contao\ContentModel;
-use Contao\File;
-use Contao\Folder;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Psr\Log\LoggerInterface;
-use Contao\NewsArchiveModel;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Contao\PageModel;
-use Contao\Config;
-use Contao\FilesModel;
-use Contao\CoreBundle\Monolog\ContaoContext;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Uid\Uuid;
-use Contao\CoreBundle\Filesystem\VirtualFilesystemInterface;
-
-
 
 class NewsImportService
 {
-    private string $projectDir;
-    private EntityManagerInterface $entityManager;
-    private ValidatorInterface $validator;
-    private LoggerInterface $logger;
-    private Filesystem $filesystem;
-    private ContaoFramework $framework;
-    private Connection $connection;
+    private Filesystem $symfonyFilesystem;
 
     public function __construct(
         private VirtualFilesystemInterface $filesystem,
-        private string $projectDir,
+        private ContaoFramework $framework,
         private LoggerInterface $logger,
-        private ContaoFramework $framework
+        #[\Symfony\Component\DependencyInjection\Attribute\Autowire('%kernel.project_dir%')]
+        private string $projectDir
     ) {
+        $this->symfonyFilesystem = new Filesystem();
         $this->framework->initialize();
-    }
-
-    private function copyImage(string $sourcePath): ?string
-    {
-        $targetPath = 'files/news_import/' . uniqid() . '_' . basename($sourcePath);
-        
-        try {
-            $this->filesystem->writeStream($targetPath, fopen($sourcePath, 'r'));
-            return StringUtil::binToUuid($this->filesystem->getUuid($targetPath));
-        } catch (\Exception $e) {
-            $this->logger->error('Bildimport fehlgeschlagen: ' . $e->getMessage());
-            return null;
-        }
     }
 
     public function importNews(?string $newsDir = null): void
     {
-        $this->framework->initialize();
-
         if ($newsDir === null) {
-            $uuid = Config::get('news_pull_upload_dir');
-            $fileModel = FilesModel::findByUuid($uuid);
-            $newsDir = $fileModel->path;
+            $newsDir = Config::get('news_pull_upload_dir');
+            if (!$newsDir) {
+                $this->logger->error('Upload-Verzeichnis nicht in den Einstellungen gesetzt.');
+                return;
+            }
         }
 
-        $baseDir = $this->projectDir . '/' . $newsDir;
+        $baseDir = $this->projectDir . '/' . rtrim($newsDir, '/');
+
+        if (!is_dir($baseDir)) {
+            $this->logger->error('Basisverzeichnis für News-Import existiert nicht: ' . $baseDir);
+            return;
+        }
 
         $dirs = array_filter(glob($baseDir . '/*'), 'is_dir');
 
         foreach ($dirs as $dir) {
             $jsonFile = $dir . '/news.json';
             if (!file_exists($jsonFile)) {
-                $this->logger->warning(
-                    'Keine news.json in: ' . $dir,
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-                );
+                $this->logger->warning('Keine news.json in: ' . $dir);
                 continue;
             }
 
@@ -85,10 +57,7 @@ class NewsImportService
             $newsData = json_decode($jsonContent, true);
 
             if (!is_array($newsData)) {
-                $this->logger->error(
-                    'Ungültiges JSON-Format in: ' . $jsonFile,
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-                );
+                $this->logger->error('Ungültiges JSON-Format in: ' . $jsonFile);
                 continue;
             }
 
@@ -101,10 +70,7 @@ class NewsImportService
                 );
 
                 if ($existingNews !== null) {
-                    $this->logger->info(
-                        'News existiert bereits: ' . $newsData['title'],
-                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-                    );
+                    $this->logger->info('News existiert bereits: ' . $newsData['title']);
                     continue;
                 }
 
@@ -112,68 +78,52 @@ class NewsImportService
                 $newsItem->tstamp = time();
                 $newsItem->headline = $newsData['title'];
                 $newsItem->alias = StringUtil::generateAlias($newsData['title']);
-                $newsItem->date = time();
-                $newsItem->time = time();
+                $newsItem->date = strtotime($newsData['date']);
+                $newsItem->time = strtotime($newsData['date']);
                 $newsItem->published = true;
                 $newsItem->pid = Config::get('news_pull_news_archive');
                 if (!$newsItem->pid) {
-                    $this->logger->error(
-                        'Kein News-Archiv in der Konfiguration gesetzt!',
-                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-                    );
-                    throw new \RuntimeException('News-Archiv nicht konfiguriert.');
+                    $this->logger->error('Kein News-Archiv in der Konfiguration gesetzt!');
+                    continue;
                 }
 
-                // Bild importieren wenn vorhanden (nur hier)
                 $imageUuid = null;
-
                 if (isset($newsData['image'])) {
-                    $imagePath = FilesystemUtil::normalizePath($dir . '/' . $newsData['image']);
-                    $uuid = $this->copyImage($imagePath);
-                    
-                    if ($uuid) {
-                        $newsItem->addImage = true;
-                        $newsItem->singleSRC = $uuid;
+                    $imagePath = $dir . '/' . $newsData['image'];
+                    if (file_exists($imagePath)) {
+                        $imageUuid = $this->copyImage($imagePath);
+                        if ($imageUuid) {
+                            $newsItem->addImage = true;
+                            $newsItem->singleSRC = $imageUuid;
+                        }
+                    } else {
+                        $this->logger->warning('Bilddatei nicht gefunden: ' . $imagePath);
                     }
                 }
 
-                $this->logger->info(
-                    'Speichere News: ' . $newsItem->headline . ', pid=' . $newsItem->pid . ', singleSRC=' . $newsItem->singleSRC . ', date=' . date('Y-m-d H:i:s', $newsItem->date),
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-                );
+                $newsItem->save();
 
                 $this->createNewsArticle($newsItem, $newsData, $imageUuid);
 
-                $newsItem->save();
+                $this->logger->info('News erfolgreich importiert: ' . $newsData['title']);
 
-                $this->logger->info(
-                    'News erfolgreich importiert: ' . $newsData['title'],
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
-                );
-
-                $this->filesystem->remove($dir);
+                $this->symfonyFilesystem->remove($dir);
 
             } catch (\Exception $e) {
-                $this->logger->error(
-                    'Fehler beim Import aus ' . $dir . ': ' . $e->getMessage(),
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-                );
-                // Ordner NICHT löschen, damit du den Fehler später prüfen kannst
+                $this->logger->error('Fehler beim Import aus ' . $dir . ': ' . $e->getMessage());
+                // Ordner nicht löschen, damit Fehler geprüft werden kann
             }
         }
     }
 
     private function createNewsArticle(NewsModel $newsItem, array $newsData, ?string $imageUuid): void
     {
-        // Teaser-Text
         $this->createTextElement($newsItem->id, 'teaser', $newsData['teaser'] ?? '');
 
-        // Bild-Element nur mit UUID, kein Kopieren mehr
         if ($imageUuid) {
             $this->createImageElement($newsItem->id, $imageUuid, $newsData['image_alt'] ?? '');
         }
 
-        // Haupttext
         $this->createTextElement($newsItem->id, 'text', $newsData['text'] ?? '');
     }
 
@@ -195,9 +145,8 @@ class NewsImportService
         $contentElement->pid = $newsId;
         $contentElement->ptable = 'tl_news';
         $contentElement->type = 'image';
-        $contentElement->singleSRC = $imageUuid; // UUID direkt speichern
+        $contentElement->singleSRC = $imageUuid;
         $contentElement->alt = $altText;
-        $contentElement->tstamp = time();
         $contentElement->imagemargin = serialize([
             'top' => '0',
             'right' => '0',
@@ -206,66 +155,55 @@ class NewsImportService
             'unit' => 'px'
         ]);
         $contentElement->invisible = 0;
+        $contentElement->tstamp = time();
         $contentElement->save();
     }
 
-    private function copyImage(string $sourcePath): ?string
-    {
-        try {
+        private function copyImage(string $sourcePath): ?string
+        {
             $uploadDir = Config::get('news_pull_upload_dir');
             if (!$uploadDir) {
-                throw new \RuntimeException('Upload-Verzeichnis nicht konfiguriert!');
+                $this->logger->error('Upload-Verzeichnis nicht konfiguriert.');
+                return null;
             }
 
-            $targetPath = FilesystemUtil::normalizePath(
-                $uploadDir . '/' . uniqid() . '_' . basename($sourcePath)
-            );
+            $targetPath = rtrim($uploadDir, '/') . '/' . uniqid() . '_' . basename($sourcePath);
+            $absoluteTarget = $this->projectDir . '/' . $targetPath;
 
-            // Datei kopieren und UUID automatisch generieren
-            $this->filesStorage->writeStream($targetPath, fopen($sourcePath, 'r'));
-            $uuid = $this->filesStorage->getUuid($targetPath);
+            try {
+                // Symfony Filesystem zum Kopieren verwenden
+                $filesystem = new \Symfony\Component\Filesystem\Filesystem();
+                $filesystem->copy($sourcePath, $absoluteTarget);
 
-            return StringUtil::binToUuid($uuid);
+                // FilesModel anlegen und speichern
+                $fileModel = new \Contao\FilesModel();
+                $fileModel->path = $targetPath;
+                $fileModel->type = 'file';
+                $fileModel->uuid = \Contao\StringUtil::uuidToBin(\Symfony\Component\Uid\Uuid::v4()->toRfc4122());
+                $fileModel->tstamp = time();
+                $fileModel->save();
 
-        } catch (\Exception $e) {
-            $this->logger->error("Bildimport fehlgeschlagen: " . $e->getMessage());
-            return null;
+                return \Contao\StringUtil::binToUuid($fileModel->uuid);
+
+            } catch (\Exception $e) {
+                $this->logger->error('Fehler beim Bildimport: ' . $e->getMessage());
+                return null;
+            }
         }
-    }    
 
     private function validateJson(array $newsData): void
     {
         if (empty($newsData['title'])) {
-            $this->logger->error(
-                'Title is required',
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \Exception('Title is required');
+            throw new \InvalidArgumentException('Title is required');
         }
-
         if (empty($newsData['teaser'])) {
-            $this->logger->error(
-                'Teaser is required',
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \Exception('Teaser is required');
+            throw new \InvalidArgumentException('Teaser is required');
         }
-
         if (empty($newsData['text'])) {
-            $this->logger->error(
-                'Text is required',
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \Exception('Text is required');
+            throw new \InvalidArgumentException('Text is required');
         }
-
         if (!empty($newsData['lang']) && !in_array($newsData['lang'], ['de', 'en'])) {
-            $this->logger->error(
-                'Invalid language code: ' . $newsData['lang'],
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            throw new \Exception('Invalid language code: ' . $newsData['lang']);
+            throw new \InvalidArgumentException('Invalid language code: ' . $newsData['lang']);
         }
     }
-
 }
