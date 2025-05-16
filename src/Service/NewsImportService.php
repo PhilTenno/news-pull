@@ -19,6 +19,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Contao\PageModel;
 use Contao\Config;
 use Contao\FilesModel;
+use Contao\CoreBundle\Monolog\ContaoContext;
 
 class NewsImportService
 {
@@ -68,8 +69,18 @@ class NewsImportService
 
     public function importNews(): void
     {
-        $this->logger->info('Import gestartet');
-        $this->logger->info('NewsImportService: importNews() wurde aufgerufen');
+        //Log
+        $this->logger->info(
+            'NewsImportService: Import start',
+            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+        );
+
+        //Log
+        $this->logger->info(
+            'NewsImportService: importNews() wurde aufgerufen',
+            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+        );
+
 
         $uploadDir = $this->getUploadDir();
         $uploadPath = $this->projectDir . '/web/' . $uploadDir;
@@ -113,7 +124,13 @@ class NewsImportService
             try {
                 $this->createNewsArticle($newsData, $imageFile);
                 $this->filesystem->remove($newsDirectory);
-                $this->logger->info('Successfully imported news from directory: ' . $newsDirectory);
+                
+                //Log
+                $this->logger->info(
+                    'Successfully imported news from directory: ' . $newsDirectory,
+                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+                );
+
             } catch (\Exception $e) {
                 $this->logger->error('Error creating news article from directory: ' . $newsDirectory . ' - ' . $e->getMessage());
             }
@@ -122,7 +139,14 @@ class NewsImportService
 
     private function createNewsArticle(array $newsData, ?string $imageFile): void
     {
-        $this->logger->info('Wert von $imageFile: ' . var_export($imageFile, true));
+        //Log
+        $this->logger->info(
+            'Wert von $imageFile: ' . var_export($imageFile, true),
+            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+        );
+
+
+        
         $archiveId = Config::get('news_pull_news_archive');
         if (!$archiveId) {
             throw new \Exception('No news archive configured in settings. Please select a news archive in the backend settings.');
@@ -217,7 +241,12 @@ class NewsImportService
     $newFullPath = $this->projectDir . '/web' . $newPath;
 
     // Logging für Debug
-    $this->logger->info('Kopiere Bild von ' . $imageFile . ' nach ' . $newFullPath);
+    $this->logger->info(
+        'Kopiere Bild von ' . $imageFile . ' nach ' . $newFullPath,
+        ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+    );
+
+
 
     if (!file_exists($imageFile)) {
         $this->logger->error('Quelldatei existiert nicht: ' . $imageFile);
@@ -225,7 +254,13 @@ class NewsImportService
     }
 
     if (!is_dir($this->projectDir . '/web' . $this->imageDir)) {
-        $this->logger->info('Zielverzeichnis existiert nicht, wird angelegt: ' . $this->projectDir . '/web' . $this->imageDir);
+        //Log
+        $this->logger->info(
+            'Zielverzeichnis existiert nicht, wird angelegt: ' . $this->projectDir . '/web' . $this->imageDir,
+            ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]
+        );
+
+
         (new Folder(str_replace('/files/', '', $this->imageDir)))->unprotect();
     }
 
