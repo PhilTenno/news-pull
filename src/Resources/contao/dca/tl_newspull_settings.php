@@ -70,6 +70,9 @@ $GLOBALS['TL_DCA']['tl_newspull_settings'] = [
 
     // Fields
     'fields' => [
+        'id' => [
+            'sql' => "int(10) unsigned NOT NULL auto_increment"
+        ],        
         'tstamp' => [
             'sql' => "int(10) unsigned NOT NULL default '0'"
         ],
