@@ -1,5 +1,7 @@
 <?php
 
+error_log('DCA tl_newspull_settings wurde geladen: ' . date('c'));
+
 $GLOBALS['TL_DCA']['tl_newspull_settings'] = [
 
     // Konfiguration
