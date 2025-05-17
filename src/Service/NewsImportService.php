@@ -9,16 +9,18 @@ use Contao\StringUtil;
 use Contao\Config;
 use Contao\NewsModel;
 use Contao\ContentModel;
+use Contao\Database;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Uid\Uuid;
 
 class NewsImportService
 {
-   private VirtualFilesystemInterface $filesystem;
+    private VirtualFilesystemInterface $filesystem;
     private string $projectDir;
     private LoggerInterface $logger;
     private ContaoFramework $framework;
+    private ?array $settings = null;
 
     public function __construct(
         VirtualFilesystemInterface $filesystem,
@@ -32,25 +34,42 @@ class NewsImportService
         $this->framework = $framework;
     }
 
+    private function getSettings(): ?array
+    {
+        if ($this->settings === null) {
+            $db = Database::getInstance();
+            $result = $db->prepare('SELECT * FROM tl_newspull_settings LIMIT 1')->execute();
+            
+            if ($result->numRows) {
+                $this->settings = $result->row();
+            } else {
+                $this->logger->error('Keine NewsPull-Einstellungen gefunden. Bitte im Backend konfigurieren.');
+                return null;
+            }
+        }
+        
+        return $this->settings;
+    }
+
     public function importNews(?string $newsDir = null): string
     {
         $importedNews = [];
         $errors = [];
 
         if ($newsDir === null) {
-            $newsDir = \Contao\Config::get('news_pull_upload_dir');
-            $this->logger->info('newsDir (aus Config): ' . $newsDir);
+            $settings = $this->getSettings();
+            if (!$settings) {
+                return 'Fehler: NewsPull-Einstellungen nicht gefunden.';
+            }
+            
+            $newsDir = $settings['news_pull_upload_dir'];
             if (!$newsDir) {
                 $this->logger->error('Upload-Verzeichnis nicht in den Einstellungen gesetzt.');
                 return 'Fehler: Upload-Verzeichnis nicht gesetzt.';
             }
         }
 
-        $this->logger->info('newsDir: ' . $newsDir);
         $baseDir = $this->projectDir . '/' . rtrim($newsDir, '/');
-        // Logge $baseDir nachdem es definiert wurde
-        $this->logger->info('baseDir: ' . $baseDir);
-
         if (!is_dir($baseDir)) {
             $this->logger->error('Basisverzeichnis für News-Import existiert nicht: ' . $baseDir);
             return 'Fehler: Basisverzeichnis existiert nicht: ' . $baseDir;
@@ -76,7 +95,7 @@ class NewsImportService
             try {
                 $this->validateJson($newsData);
 
-                $existingNews = \Contao\NewsModel::findBy(
+                $existingNews = NewsModel::findBy(
                     ['headline=?', 'date=?'],
                     [$newsData['title'], strtotime($newsData['date'])]
                 );
@@ -86,14 +105,20 @@ class NewsImportService
                     continue;
                 }
 
-                $newsItem = new \Contao\NewsModel();
+                $settings = $this->getSettings();
+                if (!$settings) {
+                    throw new \Exception('NewsPull-Einstellungen nicht gefunden.');
+                }
+
+                $newsItem = new NewsModel();
                 $newsItem->tstamp = time();
                 $newsItem->headline = $newsData['title'];
-                $newsItem->alias = \Contao\StringUtil::generateAlias($newsData['title']);
+                $newsItem->alias = StringUtil::generateAlias($newsData['title']);
                 $newsItem->date = strtotime($newsData['date']);
                 $newsItem->time = strtotime($newsData['date']);
-                $newsItem->published = true;
-                $newsItem->pid = \Contao\Config::get('news_pull_news_archive');
+                $newsItem->published = (bool)$settings['news_pull_auto_publish'];
+                $newsItem->pid = $settings['news_pull_news_archive'];
+                
                 if (!$newsItem->pid) {
                     $this->logger->error('Kein News-Archiv in der Konfiguration gesetzt!');
                     continue;
@@ -189,31 +214,31 @@ class NewsImportService
 
     private function copyImage(string $sourcePath): ?string
     {
-        $uploadDir = Config::get('news_pull_upload_dir');
-        if (!$uploadDir) {
-            $this->logger->error('Upload-Verzeichnis nicht konfiguriert.');
+        $settings = $this->getSettings();
+        if (!$settings || !$settings['news_pull_image_dir']) {
+            $this->logger->error('Bild-Upload-Verzeichnis nicht konfiguriert.');
             return null;
         }
 
-        $targetPath = rtrim($uploadDir, '/') . '/' . uniqid() . '_' . basename($sourcePath);
+        $targetPath = rtrim($settings['news_pull_image_dir'], '/') . '/' . uniqid() . '_' . basename($sourcePath);
         $absoluteTarget = $this->projectDir . '/' . $targetPath;
 
         try {
-        // 1. Datei physisch kopieren
-                $filesystem = new \Symfony\Component\Filesystem\Filesystem();
-                $filesystem->copy($sourcePath, $absoluteTarget);
+            // 1. Datei physisch kopieren
+            $filesystem = new Filesystem();
+            $filesystem->copy($sourcePath, $absoluteTarget);
 
-        // 2. In Contao-Datenbank registrieren (Synchronisierung)
-                $fileModel = FilesModel::findByPath($targetPath);
-                if (!$fileModel) {
-                    $fileModel = new FilesModel();
-                    $fileModel->path = $targetPath;
-                    $fileModel->type = 'file';
-                    $fileModel->uuid = StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
-                    $fileModel->tstamp = time();
-                    $fileModel->save();
-                }
-                return StringUtil::binToUuid($fileModel->uuid);
+            // 2. In Contao-Datenbank registrieren (Synchronisierung)
+            $fileModel = FilesModel::findByPath($targetPath);
+            if (!$fileModel) {
+                $fileModel = new FilesModel();
+                $fileModel->path = $targetPath;
+                $fileModel->type = 'file';
+                $fileModel->uuid = StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
+                $fileModel->tstamp = time();
+                $fileModel->save();
+            }
+            return StringUtil::binToUuid($fileModel->uuid);
 
         } catch (\Exception $e) {
             $this->logger->error('Fehler beim Bildimport: ' . $e->getMessage());
