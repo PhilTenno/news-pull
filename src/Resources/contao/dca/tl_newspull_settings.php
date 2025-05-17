@@ -53,7 +53,7 @@ $GLOBALS['TL_DCA']['tl_newspull_settings'] = [
                 'label'      => &$GLOBALS['TL_LANG']['tl_newspull_settings']['delete'],
                 'href'       => 'act=delete',
                 'icon'       => 'delete.gif',
-                'attributes' => 'onclick="if (!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\')) return false; Backend.getScrollOffset();"'
+                'attributes' => 'onclick="if(!confirm(\'' . addslashes($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? 'Wollen Sie diesen Eintrag wirklich löschen?') . '\'))return false;Backend.getScrollOffset()"'
             ],
             'show' => [
                 'label' => &$GLOBALS['TL_LANG']['tl_newspull_settings']['show'],
