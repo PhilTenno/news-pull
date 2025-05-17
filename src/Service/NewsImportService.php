@@ -38,21 +38,17 @@ class NewsImportService
         $errors = [];
 
         if ($newsDir === null) {
-            $uuid = \Contao\Config::get('news_pull_upload_dir');
-            $newsDir = null;
-            if ($uuid) {
-                $model = \Contao\FilesModel::findByUuid($uuid);
-                if ($model !== null) {
-                    $newsDir = $model->path;
-                }
-            }
+            $newsDir = \Contao\Config::get('news_pull_upload_dir');
             if (!$newsDir) {
-                $this->logger->error('Upload-Verzeichnis nicht in den Einstellungen gesetzt oder UUID ungültig.');
-                return 'Fehler: Upload-Verzeichnis nicht gesetzt oder UUID ungültig.';
+                $this->logger->error('Upload-Verzeichnis nicht in den Einstellungen gesetzt.');
+                return 'Fehler: Upload-Verzeichnis nicht gesetzt.';
             }
         }
 
+        $this->logger->info('newsDir: ' . $newsDir);
         $baseDir = $this->projectDir . '/' . rtrim($newsDir, '/');
+        // Logge $baseDir nachdem es definiert wurde
+        $this->logger->info('baseDir: ' . $baseDir);
 
         if (!is_dir($baseDir)) {
             $this->logger->error('Basisverzeichnis für News-Import existiert nicht: ' . $baseDir);
