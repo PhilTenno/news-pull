@@ -32,13 +32,23 @@ class NewsImportService
         $this->framework = $framework;
     }
 
-    public function importNews(?string $newsDir = null): void
+    public function importNews(?string $newsDir = null): string
     {
+        $importedNews = [];
+        $errors = [];
+
         if ($newsDir === null) {
-            $newsDir = Config::get('news_pull_upload_dir');
+            $uuid = \Contao\Config::get('news_pull_upload_dir');
+            $newsDir = null;
+            if ($uuid) {
+                $model = \Contao\FilesModel::findByUuid($uuid);
+                if ($model !== null) {
+                    $newsDir = $model->path;
+                }
+            }
             if (!$newsDir) {
-                $this->logger->error('Upload-Verzeichnis nicht in den Einstellungen gesetzt.');
-                return;
+                $this->logger->error('Upload-Verzeichnis nicht in den Einstellungen gesetzt oder UUID ungültig.');
+                return 'Fehler: Upload-Verzeichnis nicht gesetzt oder UUID ungültig.';
             }
         }
 
@@ -46,7 +56,7 @@ class NewsImportService
 
         if (!is_dir($baseDir)) {
             $this->logger->error('Basisverzeichnis für News-Import existiert nicht: ' . $baseDir);
-            return;
+            return 'Fehler: Basisverzeichnis existiert nicht: ' . $baseDir;
         }
 
         $dirs = array_filter(glob($baseDir . '/*'), 'is_dir');
@@ -69,7 +79,7 @@ class NewsImportService
             try {
                 $this->validateJson($newsData);
 
-                $existingNews = NewsModel::findBy(
+                $existingNews = \Contao\NewsModel::findBy(
                     ['headline=?', 'date=?'],
                     [$newsData['title'], strtotime($newsData['date'])]
                 );
@@ -79,14 +89,14 @@ class NewsImportService
                     continue;
                 }
 
-                $newsItem = new NewsModel();
+                $newsItem = new \Contao\NewsModel();
                 $newsItem->tstamp = time();
                 $newsItem->headline = $newsData['title'];
-                $newsItem->alias = StringUtil::generateAlias($newsData['title']);
+                $newsItem->alias = \Contao\StringUtil::generateAlias($newsData['title']);
                 $newsItem->date = strtotime($newsData['date']);
                 $newsItem->time = strtotime($newsData['date']);
                 $newsItem->published = true;
-                $newsItem->pid = Config::get('news_pull_news_archive');
+                $newsItem->pid = \Contao\Config::get('news_pull_news_archive');
                 if (!$newsItem->pid) {
                     $this->logger->error('Kein News-Archiv in der Konfiguration gesetzt!');
                     continue;
@@ -111,14 +121,30 @@ class NewsImportService
                 $this->createNewsArticle($newsItem, $newsData, $imageUuid);
 
                 $this->logger->info('News erfolgreich importiert: ' . $newsData['title']);
+                $importedNews[] = $newsData['title'];
 
                 $this->filesystem->delete($dir);
 
             } catch (\Exception $e) {
-                $this->logger->error('Fehler beim Import aus ' . $dir . ': ' . $e->getMessage());
+                $errors[] = 'Fehler beim Import aus ' . $dir . ': ' . $e->getMessage();
+                $this->logger->error($errors[count($errors)-1]);
                 // Ordner nicht löschen, damit Fehler geprüft werden kann
             }
         }
+
+        // Zusammenfassung erstellen
+        $summary = [];
+        if (count($importedNews) > 0) {
+            $summary[] = count($importedNews) . ' News importiert: ' . implode(', ', $importedNews);
+        }
+        if (count($errors) > 0) {
+            $summary[] = count($errors) . ' Fehler aufgetreten: ' . implode(', ', $errors);
+        }
+        if (empty($summary)) {
+            return 'Keine News zum Import gefunden.';
+        }
+
+        return implode("\n", $summary);
     }
 
     private function createNewsArticle(NewsModel $newsItem, array $newsData, ?string $imageUuid): void
@@ -164,39 +190,39 @@ class NewsImportService
         $contentElement->save();
     }
 
-        private function copyImage(string $sourcePath): ?string
-        {
-            $uploadDir = Config::get('news_pull_upload_dir');
-            if (!$uploadDir) {
-                $this->logger->error('Upload-Verzeichnis nicht konfiguriert.');
-                return null;
-            }
-
-            $targetPath = rtrim($uploadDir, '/') . '/' . uniqid() . '_' . basename($sourcePath);
-            $absoluteTarget = $this->projectDir . '/' . $targetPath;
-
-            try {
-            // 1. Datei physisch kopieren
-                    $filesystem = new \Symfony\Component\Filesystem\Filesystem();
-                    $filesystem->copy($sourcePath, $absoluteTarget);
-
-            // 2. In Contao-Datenbank registrieren (Synchronisierung)
-                    $fileModel = FilesModel::findByPath($targetPath);
-                    if (!$fileModel) {
-                        $fileModel = new FilesModel();
-                        $fileModel->path = $targetPath;
-                        $fileModel->type = 'file';
-                        $fileModel->uuid = StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
-                        $fileModel->tstamp = time();
-                        $fileModel->save();
-                    }
-                    return StringUtil::binToUuid($fileModel->uuid);
-
-            } catch (\Exception $e) {
-                $this->logger->error('Fehler beim Bildimport: ' . $e->getMessage());
-                return null;
-            }
+    private function copyImage(string $sourcePath): ?string
+    {
+        $uploadDir = Config::get('news_pull_upload_dir');
+        if (!$uploadDir) {
+            $this->logger->error('Upload-Verzeichnis nicht konfiguriert.');
+            return null;
         }
+
+        $targetPath = rtrim($uploadDir, '/') . '/' . uniqid() . '_' . basename($sourcePath);
+        $absoluteTarget = $this->projectDir . '/' . $targetPath;
+
+        try {
+        // 1. Datei physisch kopieren
+                $filesystem = new \Symfony\Component\Filesystem\Filesystem();
+                $filesystem->copy($sourcePath, $absoluteTarget);
+
+        // 2. In Contao-Datenbank registrieren (Synchronisierung)
+                $fileModel = FilesModel::findByPath($targetPath);
+                if (!$fileModel) {
+                    $fileModel = new FilesModel();
+                    $fileModel->path = $targetPath;
+                    $fileModel->type = 'file';
+                    $fileModel->uuid = StringUtil::uuidToBin(Uuid::v4()->toRfc4122());
+                    $fileModel->tstamp = time();
+                    $fileModel->save();
+                }
+                return StringUtil::binToUuid($fileModel->uuid);
+
+        } catch (\Exception $e) {
+            $this->logger->error('Fehler beim Bildimport: ' . $e->getMessage());
+            return null;
+        }
+    }
 
     private function validateJson(array $newsData): void
     {
