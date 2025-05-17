@@ -31,7 +31,12 @@
         }
     ],    
     "extra": {
-        "contao-manager-plugin": "PhilTenno\\NewsPull\\ContaoManager\\Plugin"
+        "contao-manager-plugin": "PhilTenno\\NewsPull\\ContaoManager\\Plugin",
+        "contao": {
+            "sources": {
+                "": "src/Resources/contao"
+            }
+        }
     },
     "config": {
         "allow-plugins": {
