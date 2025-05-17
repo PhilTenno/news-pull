@@ -39,6 +39,7 @@ class NewsImportService
 
         if ($newsDir === null) {
             $newsDir = \Contao\Config::get('news_pull_upload_dir');
+            $this->logger->info('newsDir (aus Config): ' . $newsDir);
             if (!$newsDir) {
                 $this->logger->error('Upload-Verzeichnis nicht in den Einstellungen gesetzt.');
                 return 'Fehler: Upload-Verzeichnis nicht gesetzt.';
