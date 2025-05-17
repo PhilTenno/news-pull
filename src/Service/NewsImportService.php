@@ -36,6 +36,7 @@ class NewsImportService
 
     private function getSettings(): ?array
     {
+        
         if ($this->settings === null) {
             $db = Database::getInstance();
             $result = $db->prepare('SELECT * FROM tl_newspull_settings LIMIT 1')->execute();
