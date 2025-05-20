@@ -4,7 +4,7 @@ use Contao\DataContainer;
 
 $GLOBALS['TL_DCA']['tl_newspull'] = [
     'config' => [
-        'dataContainer' => DataContainer::class,
+        'dataContainer' => 'Table',
         'sql' => ['keys' => ['id' => 'primary']]
     ],
     'palettes' => [

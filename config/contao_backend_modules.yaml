@@ -1,4 +1,4 @@
-system
+system:
   news_pull:
     tables:
       - tl_newspull
