@@ -1,0 +1,2 @@
+# config/contao_models.yaml
+tl_newspull: PhilTenno\NewsPull\Model\NewspullModel

@@ -1,0 +1,6 @@
+# config/contao_backend_modules.yaml
+system:
+    news_pull:
+        tables:
+            - tl_newspull
+        # icon: 'bundles/philtennonewspull/icon.svg'
