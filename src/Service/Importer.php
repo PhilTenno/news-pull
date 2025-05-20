@@ -6,7 +6,7 @@ use Contao\ContentModel;
 use Contao\NewsModel;
 use Contao\NewsArchiveModel;
 use Contao\UserModel;
-use PhilTenno\NewsPull\Model\NewspullConfigModel;
+use PhilTenno\NewsPull\Model\NewspullModel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -18,7 +18,7 @@ class Importer
         private readonly LoggerInterface $logger
     ) {}
 
-    public function runImport(NewspullConfigModel $config): array
+    public function runImport(NewspullModel $config): array
     {
         $uploadDir = TL_ROOT . '/' . $config->upload_dir;
         $batchSize = $config->batch_size ?? 10;
@@ -55,7 +55,7 @@ class Importer
         return ['success' => $imported, 'fail' => $errors];
     }
 
-    private function importNewsFolder(string $folderPath, NewspullConfigModel $config, int $maxFileSize): bool
+    private function importNewsFolder(string $folderPath, NewspullModel $config, int $maxFileSize): bool
     {
         $requiredFiles = ['news.json', 'teaser.txt', 'article.txt'];
 
