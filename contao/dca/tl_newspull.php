@@ -11,6 +11,20 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
         '__selector__' => [],
         'default' => '{settings_legend},token,upload_dir,news_archive,author,auto_publish,batch_size,max_file_size'
     ],
+    'list' => [
+        'sorting' => [
+            'mode' => 1,
+            'fields' => ['id'],
+            'flag' => 1,
+            'panelLayout' => 'filter;search,limit'
+        ],
+        'label' => [
+            'fields' => ['id'],
+            'format' => '%s'
+        ],
+        'global_operations' => [],
+        'operations' => []
+    ],    
     'fields' => [
         'id' => [
             'sql' => "int(10) unsigned NOT NULL auto_increment"
