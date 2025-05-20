@@ -7,9 +7,12 @@
     "php": ">=8.2",
     "contao/core-bundle": "^5.3"
   },
+  "require-dev": {
+    "contao/manager-plugin": "^2.0"
+  },
   "autoload": {
     "psr-4": {
-      "PhilTenno\\NewsPull\\": "src/"
+      "PhilTenno\\NewsPull\\": "src"
     }
   },
   "extra": {
