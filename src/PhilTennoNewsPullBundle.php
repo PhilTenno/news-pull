@@ -8,8 +8,8 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class PhilTennoNewsPullBundle extends Bundle
 {
-  public function __construct()
+  public function getPath(): string
     {
-        error_log('PhilTennoNewsPullBundle geladen');
+        return \dirname(__DIR__);
     }
 }
