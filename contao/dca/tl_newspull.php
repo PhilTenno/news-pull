@@ -18,8 +18,13 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
             'fields' => ['id'],
             'format' => '%s'
         ],
-        'global_operations' => [],
-        'operations' => []
+        'operations' => [
+            'edit' => [
+                'label' => &$GLOBALS['TL_LANG']['tl_newspull']['edit'],
+                'href'  => 'act=edit',
+                'icon'  => 'edit.svg'
+            ]
+        ]
     ],     
     'palettes' => [
         '__selector__' => [],
@@ -27,6 +32,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
     ],   
     'fields' => [
         'id' => [
+            'label' => ['ID', 'Primärschlüssel'],
             'sql' => "int(10) unsigned NOT NULL auto_increment"
         ],
         'token' => [
