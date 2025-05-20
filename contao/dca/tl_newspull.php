@@ -7,10 +7,6 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
         'dataContainer' => 'Table',
         'sql' => ['keys' => ['id' => 'primary']]
     ],
-    'palettes' => [
-        '__selector__' => [],
-        'default' => '{settings_legend},token,upload_dir,news_archive,author,auto_publish,batch_size,max_file_size'
-    ],
     'list' => [
         'sorting' => [
             'mode' => 1,
@@ -24,7 +20,11 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
         ],
         'global_operations' => [],
         'operations' => []
-    ],    
+    ],     
+    'palettes' => [
+        '__selector__' => [],
+        'default' => '{settings_legend},token,upload_dir,news_archive,author,auto_publish,batch_size,max_file_size'
+    ],   
     'fields' => [
         'id' => [
             'sql' => "int(10) unsigned NOT NULL auto_increment"
