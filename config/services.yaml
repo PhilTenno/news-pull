@@ -5,3 +5,8 @@ services:
 
   PhilTenno\NewsPull\Controller\ImportController:
     tags: ['controller.service_arguments']
+
+  PhilTenno\NewsPull\Service\Importer:
+    arguments:
+      $logger: '@logger'
+      $params: '@parameter_bag'

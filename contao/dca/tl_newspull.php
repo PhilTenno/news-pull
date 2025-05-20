@@ -1,10 +1,10 @@
 <?php
 
-use Contao\DataContainer;
+use Contao\DC_Table;
 
 $GLOBALS['TL_DCA']['tl_newspull'] = [
     'config' => [
-        'dataContainer' => 'Table',
+        'dataContainer' => DC_Table::class,
         'sql' => ['keys' => ['id' => 'primary']]
     ],
     'list' => [
@@ -25,11 +25,11 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
                 'icon'  => 'edit.svg'
             ]
         ]
-    ],     
+    ],
     'palettes' => [
         '__selector__' => [],
         'default' => '{settings_legend},token,upload_dir,news_archive,author,auto_publish,batch_size,max_file_size'
-    ],   
+    ],
     'fields' => [
         'id' => [
             'label' => ['ID', 'Primärschlüssel'],

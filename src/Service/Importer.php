@@ -10,17 +10,23 @@ use PhilTenno\NewsPull\Model\NewspullModel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 sleep(1);
 
 class Importer
 {
+    private string $projectDir;
+    
     public function __construct(
-        private readonly LoggerInterface $logger
-    ) {}
+        private readonly LoggerInterface $logger,
+        ParameterBagInterface $params
+    ) {
+        $this->projectDir = $params->get('kernel.project_dir');
+    }
 
     public function runImport(NewspullModel $config): array
     {
-        $uploadDir = TL_ROOT . '/' . $config->upload_dir;
+        $uploadDir = $this->projectDir . '/' . $config->upload_dir;
         $batchSize = $config->batch_size ?? 10;
         $maxFileSize = ($config->max_file_size ?? 256) * 1024; // in bytes
 
