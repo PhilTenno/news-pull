@@ -10,7 +10,7 @@ use PhilTenno\NewsPull\Model\NewspullConfigModel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
-sleep;
+sleep(1);
 
 class Importer
 {
