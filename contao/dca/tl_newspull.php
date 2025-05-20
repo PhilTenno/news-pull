@@ -1,7 +1,5 @@
 <?php
 
-error_log('DCA tl_newspull geladen');
-
 use Contao\DataContainer;
 
 $GLOBALS['TL_DCA']['tl_newspull'] = [

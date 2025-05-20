@@ -1,6 +1,6 @@
 <?php
 
-// contao/config/config.php
+error_log('config.php aus news-pull geladen');
 
 $GLOBALS['BE_MOD']['system']['news_pull'] = [
     'tables' => ['tl_newspull'],
