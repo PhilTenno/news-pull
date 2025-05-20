@@ -1,0 +1,7 @@
+services:
+  PhilTenno\NewsPull\:
+    resource: '../src/*'
+    exclude: '../src/{DependencyInjection,Entity,Tests,Kernel.php}'
+
+  PhilTenno\NewsPull\Controller\ImportController:
+    tags: ['controller.service_arguments']
