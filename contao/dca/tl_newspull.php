@@ -35,6 +35,9 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
             'label' => ['ID', 'Primärschlüssel'],
             'sql' => "int(10) unsigned NOT NULL auto_increment"
         ],
+        'tstamp' => [
+            'sql' => "int(10) unsigned NOT NULL default 0"
+        ],
         'token' => [
             'label' => ['Token', 'Token zur Absicherung der Import-URL'],
             'inputType' => 'text',
