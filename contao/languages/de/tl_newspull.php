@@ -1,6 +1,6 @@
 <?php
 
-$GLOBALS['TL_LANG']['tl_newspull']['token'] = ['Token', 'Token zur Absicherung der Import-URL'];
+$GLOBALS['TL_LANG']['tl_newspull']['token'] = ['Token', 'Import-Aufruf: https://deine-domain.com/newspullimport?token=Dein_Token'];
 $GLOBALS['TL_LANG']['tl_newspull']['upload_dir'] = ['Upload-Verzeichnis', 'Pfad unterhalb /files'];
 $GLOBALS['TL_LANG']['tl_newspull']['news_archive'] = ['News-Archiv', 'Zielarchiv für neue News'];
 $GLOBALS['TL_LANG']['tl_newspull']['author'] = ['Autor', 'Wird als Autor gesetzt'];
@@ -9,3 +9,4 @@ $GLOBALS['TL_LANG']['tl_newspull']['batch_size'] = ['Batch-Größe', 'Anzahl New
 $GLOBALS['TL_LANG']['tl_newspull']['max_file_size'] = ['Maximale Dateigröße', 'Größe pro Datei in KB'];
 
 $GLOBALS['TL_LANG']['tl_newspull']['settings_legend'] = 'Import-Einstellungen';
+$GLOBALS['TL_LANG']['tl_newspull']['delete'] = ['Löschen', 'Die Konfiguration löschen'];
