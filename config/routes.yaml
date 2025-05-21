@@ -1,0 +1,3 @@
+news_import:
+    resource: '../src/Controller/ImportController.php'
+    type: attribute
