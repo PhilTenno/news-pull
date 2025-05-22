@@ -26,10 +26,19 @@ class ImportController
             return new Response('Ungültiger Token', 403);
         }
 
-        // Import ausführen
         $result = $importer->runImport($config);
 
-        // Ergebnis als JSON zurückgeben
-        return new Response(json_encode($result), 200, ['Content-Type' => 'application/json']);
+        header('Content-Type: text/plain');
+
+        $total = $result['success'] + $result['fail'];
+        echo "{$result['success']} von $total News importiert, {$result['fail']} fehlgeschlagen\n";
+
+        if (!empty($result['failed'])) {
+            echo "Fehlgeschlagen:\n";
+            foreach ($result['failed'] as $fail) {
+                echo "- $fail\n";
+            }
+        }
+        exit;
     }
 }
