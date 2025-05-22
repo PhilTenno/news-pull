@@ -43,7 +43,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
     ],
     'fields' => [
         'title' => [
-            'label' => ['Titel', 'Name der Konfiguration'],
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['title'],
             'inputType' => 'text',
             'eval' => ['mandatory' => true, 'maxlength' => 128, 'tl_class' => 'w100'],
             'sql' => "varchar(128) NOT NULL default ''"
@@ -59,7 +59,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
             'sql' => "int(10) unsigned NOT NULL default 0"
         ],        
         'upload_dir' => [
-            'label' => ['Upload-Verzeichnis', 'Verzeichnis mit News-Ordnern (unterhalb /files)'],
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['upload_dir'],
             'inputType' => 'fileTree',
             'eval' => [
                 'mandatory' => true,
@@ -70,41 +70,41 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
             'sql' => "binary(16) NULL" 
         ],
         'news_archive' => [
-            'label' => ['News-Archiv', 'Ziel-News-Archiv für die importierten News'],
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['news_archive'],
             'inputType' => 'select',
             'foreignKey' => 'tl_news_archive.title',
             'eval' => ['mandatory' => true, 'tl_class' => 'w50'],
             'sql' => "int(10) unsigned NOT NULL default 0"
         ],
         'author' => [
-            'label' => ['Autor', 'Backend-Benutzer, der als Autor gesetzt wird'],
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['author'],
             'inputType' => 'select',
             'foreignKey' => 'tl_user.name',
             'eval' => ['mandatory' => true, 'tl_class' => 'w50'],
             'sql' => "int(10) unsigned NOT NULL default 0"
         ],
         'batch_size' => [
-            'label' => ['Batch-Größe', 'Wie viele Ordner pro Importdurchlauf?'],
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['batch_size'],
             'default' => 10,
             'inputType' => 'text',
             'eval' => ['rgxp'=>'digit', 'tl_class' => 'w50'],
             'sql' => "int(10) unsigned NOT NULL default 10"
         ],
         'max_file_size' => [
-            'label' => ['Maximale Dateigröße', 'Maximale Größe (in KB) für teaser.txt und article.txt'],
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['max_file_size'],
             'default' => 256,
             'inputType' => 'text',
             'eval' => ['rgxp'=>'digit', 'tl_class' => 'w50'],
             'sql' => "int(10) unsigned NOT NULL default 256"
         ],
         'token' => [
-            'label' => ['Token', 'Token zur Absicherung der Import-URL'],
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['token'],
             'inputType' => 'text',
             'eval' => ['mandatory' => true, 'maxlength' => 64, 'tl_class' => 'w50'],
             'sql' => "varchar(64) NOT NULL default ''"
         ], 
         'auto_publish' => [
-            'label' => ['Automatisch veröffentlichen', 'News direkt veröffentlichen'],
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['auto_publish'],
             'inputType' => 'checkbox',
             'eval' => ['tl_class' => 'clr'],
             'sql' => "char(1) NOT NULL default ''"

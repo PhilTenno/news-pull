@@ -93,7 +93,6 @@ class Importer
             'failed' => $failed,
         ];
     }
-
     private function importNewsFolder(string $folderPath, NewspullModel $config, int $maxFileSize, array &$failed): bool
     {
         $requiredFiles = ['news.json', 'teaser.txt', 'article.txt'];
@@ -134,8 +133,16 @@ class Importer
         }
 
         // Sanitize Text
-        $teaserHtml = $this->sanitizeHtml(file_get_contents($folderPath . '/teaser.txt'));
-        $articleHtml = $this->sanitizeHtml(file_get_contents($folderPath . '/article.txt'));
+        $teaser = file_get_contents($folderPath . '/teaser.txt');
+        $teaser = preg_replace('/^\xEF\xBB\xBF/', '', $teaser); // BOM entfernen
+        $teaserHtml = $this->sanitizeHtml($teaser);
+        // Prolog nach dem Sanitizen entfernen
+        $teaserHtml = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $teaserHtml);
+
+        $article = file_get_contents($folderPath . '/article.txt');
+        $article = preg_replace('/^\xEF\xBB\xBF/', '', $article);
+        $articleHtml = $this->sanitizeHtml($article);
+        $articleHtml = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $articleHtml);
 
         // News anlegen
         $news = new NewsModel();
@@ -148,6 +155,7 @@ class Importer
         $news->time = time();
         $news->published = $config->auto_publish;
         $news->teaser = $teaserHtml;
+
         // Alias generieren (wie Contao-Backend):
         $slugger = new AsciiSlugger('de'); // oder 'fr', 'en', je nach Sprache
         $alias = strtolower($slugger->slug($json['title'])->toString());
@@ -159,19 +167,17 @@ class Importer
         }
         $news->alias = $alias;
 
-
         if (!empty($json['metaTitle'])) {
             $news->pageTitle = $json['metaTitle'];
         }
         if (!empty($json['metaDescription'])) {
             $news->description = $json['metaDescription'];
         }
-
         $news->save();
 
         // Inhaltselemente erstellen
-        $this->createContentElement($news->id, $teaserHtml, 'newsReader__teaser');
-        $this->createContentElement($news->id, $articleHtml, 'newsReader__article');
+        $this->createContentElement($news->id, $teaserHtml, 'newsPull__teaser');
+        $this->createContentElement($news->id, $articleHtml, 'newsPull__article');
 
         // Erfolgsmeldung für jede importierte News (optional)
         $msg = sprintf('News "%s" (ID %d) importiert aus %s.', $news->headline, $news->id, $folderPath);
@@ -184,7 +190,6 @@ class Importer
         $this->deleteFolder($folderPath);
         return true;
     }
-
     private function createContentElement(int $pid, string $html, string $cssClass): void
     {
         $content = new ContentModel();
@@ -193,7 +198,7 @@ class Importer
         $content->sorting = 128;
         $content->type = 'text';
         $content->text = $html;
-        $content->cssID = serialize([$cssClass, '']);
+        $content->cssID = serialize(['', $cssClass]);
         $content->tstamp = time();
         $content->save();
     }

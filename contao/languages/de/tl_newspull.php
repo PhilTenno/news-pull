@@ -1,5 +1,5 @@
 <?php
-
+$GLOBALS['TL_LANG']['tl_newspull']['title'] = ['Titel', 'Name der Konfiguration'];
 $GLOBALS['TL_LANG']['tl_newspull']['token'] = ['Token', 'Import-Aufruf: https://deine-domain.com/newspullimport?token=Dein_Token'];
 $GLOBALS['TL_LANG']['tl_newspull']['upload_dir'] = ['Upload-Verzeichnis', 'Pfad unterhalb /files'];
 $GLOBALS['TL_LANG']['tl_newspull']['news_archive'] = ['News-Archiv', 'Zielarchiv für neue News'];
