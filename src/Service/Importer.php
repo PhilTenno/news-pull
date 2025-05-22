@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Contao\FilesModel;
 sleep(1);
 
 class Importer
@@ -26,7 +27,17 @@ class Importer
 
     public function runImport(NewspullModel $config): array
     {
-        $uploadDir = $this->projectDir . '/' . $config->upload_dir;
+
+        $uploadDir = $config->upload_dir; // binary(16)
+        $model = FilesModel::findByUuid($uploadDir);
+
+        if ($model !== null) {
+            $uploadDir = $this->projectDir . '/' . $model->path;
+        } else {
+            $this->logger->error("Upload-UUID konnte nicht aufgelöst werden: " . bin2hex($config->upload_dir));
+            return ['success' => 0, 'fail' => 0];
+        }
+
         $batchSize = $config->batch_size ?? 10;
         $maxFileSize = ($config->max_file_size ?? 256) * 1024; // in bytes
 
