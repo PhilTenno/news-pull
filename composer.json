@@ -5,7 +5,8 @@
   "license": "MIT",
   "require": {
     "php": ">=8.2",
-    "contao/core-bundle": "^5.3"
+    "contao/core-bundle": "^5.3",
+    "contao/news-bundle": "^5.3"
   },
   "require-dev": {
     "contao/manager-plugin": "^2.0"
