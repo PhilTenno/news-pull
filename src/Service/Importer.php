@@ -153,7 +153,7 @@ class Importer
         $news->author = $config->author;
         $news->start = strtotime($json['dateShow'] . ' 00:00:01');
         $news->time = time();
-        $news->published = $config->auto_publish;
+        $news->published = !empty($config->auto_publish) ? 1 : 0;
         $news->teaser = $teaserHtml;
 
         // Alias generieren (wie Contao-Backend):
