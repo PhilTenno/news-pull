@@ -1,6 +1,6 @@
 <?php
 $GLOBALS['TL_LANG']['tl_newspull']['title'] = ['Title', 'Configuration name'];
-$GLOBALS['TL_LANG']['tl_newspull']['token'] = ['Token', 'Import URL: https://your-domain.com/newspullimport?token=Your_Token'];
+$GLOBALS['TL_LANG']['tl_newspull']['token'] = ['Token', 'Import URL: https://your-domain.com/newspullimport?token=Your_Token or =all'];
 $GLOBALS['TL_LANG']['tl_newspull']['upload_dir'] = ['Upload directory', 'Path below /files'];
 $GLOBALS['TL_LANG']['tl_newspull']['news_archive'] = ['News archive', 'Target archive for new news'];
 $GLOBALS['TL_LANG']['tl_newspull']['author'] = ['Author', 'Will be set as author'];
