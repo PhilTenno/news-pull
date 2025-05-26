@@ -243,11 +243,13 @@ class Importer
         $allowedTags = [
             'p', 'a', 'strong', 'em','u','i','b','br', 'ul', 'ol', 'li', 'br', 'span', 'div',
             'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote','pre','code','img',
-            'h1','h2','h3','h4','h5','h6'
+            'h1','h2','h3','h4','h5','h6','svg','path', 'rect', 'circle', 'g', 'line', 'polyline', 'polygon', 'ellipse', 'text', 'defs', 'use', 'symbol', 'clipPath', 'mask'
         ];
 
         $allowedAttributes = [
-            'href', 'src', 'alt', 'target', 'rel', 'title', 'style', 'class', 'colspan', 'rowspan'
+            'href', 'src', 'alt', 'target', 'rel', 'title', 'style', 'class', 'colspan', 'rowspan','width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width', 'x', 'y', 'cx', 'cy', 'r', 'd', 'points', 'transform', 'opacity',
+    'x1', 'y1', 'x2', 'y2', 'rx', 'ry', 'style', 'class', 'id', 'xlink:href', 'xmlns', 'xmlns:xlink', 'marker-end', 'marker-mid', 'marker-start',
+    'font-size', 'font-family', 'text-anchor', 'dominant-baseline', 'clip-path', 'mask'
         ];
 
         $html = preg_replace('/<\?(php)?[\s\S]*?\?>/i', '', $html);
