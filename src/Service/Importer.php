@@ -292,21 +292,20 @@ class Importer
     }    
     private function cleanDomNode(\DOMNode $node, array $allowedTags, array $allowedAttributes): void
     {
-        if ($node instanceof \DOMElement) {
-            if (!in_array($node->tagName, $allowedTags, true)) {
-                $node->parentNode?->removeChild($node);
-                return;
-            }
-
-            foreach (iterator_to_array($node->attributes ?? []) as $attr) {
-                if (!in_array($attr->name, $allowedAttributes, true)) {
-                    $node->removeAttribute($attr->name);
-                }
-            }
+      if ($node instanceof \DOMElement) {
+        if (!in_array($node->tagName, $allowedTags, true)) {
+          $node->parentNode?->removeChild($node);
+          return;
         }
 
-        foreach (iterator_to_array($node->childNodes ?? []) as $child) {
-            $this->cleanDomNode($child, $allowedTags, $allowedAttributes);
+        foreach (iterator_to_array($node->attributes ?? []) as $attr) {
+          if (!in_array($attr->name, $allowedAttributes, true)) {
+            $node->removeAttribute($attr->name);
+          }
         }
+      }
+      foreach (iterator_to_array($node->childNodes ?? []) as $child) {
+        $this->cleanDomNode($child, $allowedTags, $allowedAttributes);
+      }
     }
 }
