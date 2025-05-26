@@ -241,13 +241,13 @@ class Importer
     private function sanitizeHtml(string $html): string
     {
         $allowedTags = [
-            'p', 'a', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'span', 'div',
-            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote',
+            'p', 'a', 'strong', 'em','u','i','b','br', 'ul', 'ol', 'li', 'br', 'span', 'div',
+            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote','pre','code','img',
             'h1','h2','h3','h4','h5','h6'
         ];
 
         $allowedAttributes = [
-            'href', 'src', 'alt', 'title', 'style', 'class', 'colspan', 'rowspan'
+            'href', 'src', 'alt', 'target', 'rel', 'title', 'style', 'class', 'colspan', 'rowspan'
         ];
 
         $html = preg_replace('/<\?(php)?[\s\S]*?\?>/i', '', $html);
