@@ -7,7 +7,7 @@ $GLOBALS['TL_LANG']['tl_newspull']['author'] = ['Author', 'Will be set as author
 $GLOBALS['TL_LANG']['tl_newspull']['auto_publish'] = ['Publish automatically', 'Publish news immediately'];
 $GLOBALS['TL_LANG']['tl_newspull']['batch_size'] = ['Batch size', 'Number of news per run'];
 $GLOBALS['TL_LANG']['tl_newspull']['max_file_size'] = ['Maximum file size', 'Size per file in KB'];
-$GLOBALS['TL_LANG']['tl_newspull']['teaser_news'] = ['Teaser', 'show in article'];
+$GLOBALS['TL_LANG']['tl_newspull']['teaser_news'] = ['Teaser inside article', 'Place teaser before the article text'];
 
 $GLOBALS['TL_LANG']['tl_newspull']['settings_legend'] = 'Import Settings';
 $GLOBALS['TL_LANG']['tl_newspull']['delete'] = ['Delete', 'Delete the configuration'];
