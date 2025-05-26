@@ -247,9 +247,8 @@ class Importer
         ];
 
         $allowedAttributes = [
-            'href', 'src', 'alt', 'target', 'rel', 'title', 'style', 'class', 'colspan', 'rowspan','width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width', 'x', 'y', 'cx', 'cy', 'r', 'd', 'points', 'transform', 'opacity',
-    'x1', 'y1', 'x2', 'y2', 'rx', 'ry', 'style', 'class', 'id', 'xlink:href', 'xmlns', 'xmlns:xlink', 'marker-end', 'marker-mid', 'marker-start',
-    'font-size', 'font-family', 'text-anchor', 'dominant-baseline', 'clip-path', 'mask'
+            'href', 'src', 'alt', 'target', 'rel', 'title', 'style', 'class', 'colspan', 'rowspan','width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width', 'x', 'y', 'cx', 'cy', 'r', 'd', 'points', 'transform', 'opacity','x1', 'y1', 'x2', 'y2', 'rx', 'ry', 'style', 'class', 'id',
+            'xlink:href', 'xmlns', 'xmlns:xlink', 'marker-end', 'marker-mid', 'marker-start','font-size', 'font-family', 'text-anchor', 'dominant-baseline', 'clip-path', 'mask'
         ];
 
         $html = preg_replace('/<\?(php)?[\s\S]*?\?>/i', '', $html);
