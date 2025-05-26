@@ -36,7 +36,7 @@ class Importer
         if ($model !== null) {
             $uploadDir = $this->projectDir . '/' . $model->path;
         } else {
-            $msg = "Upload-UUID konnte nicht aufgelöst werden: " . bin2hex($config->upload_dir);
+            $msg = "Upload UUID could not be resolved: " . bin2hex($config->upload_dir);
             $this->logger->error(
                 $msg,
                 ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
@@ -51,7 +51,7 @@ class Importer
         $finder = new Finder();
 
         if (!$fs->exists($uploadDir)) {
-            $msg = "Upload-Verzeichnis existiert nicht: $uploadDir";
+            $msg = "Upload directory does not exist: $uploadDir";
             $this->logger->error(
                 $msg,
                 ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
@@ -81,7 +81,7 @@ class Importer
         }
 
         // Zusammenfassende Log-Ausgabe nach dem Import
-        $summaryMsg = sprintf('News-Import: %d erfolgreich, %d fehlgeschlagen.', $imported, $errors);
+        $summaryMsg = sprintf('News import: %d successful, %d failed.', $imported, $errors);
         $this->logger->info(
             $summaryMsg,
             ['contao' => new ContaoContext(__METHOD__, $errors > 0 ? ContaoContext::ERROR : ContaoContext::CRON)]
@@ -99,8 +99,8 @@ class Importer
 
         foreach ($requiredFiles as $file) {
             if (!file_exists($folderPath . '/' . $file)) {
-                $failed[] = basename($folderPath) . " (fehlende Datei: $file)";
-                $msg = "Datei fehlt: $file in $folderPath";
+                $failed[] = basename($folderPath) . " (missing file: $file)";
+                $msg = "missing file: $file in $folderPath";
                 $this->logger->error(
                     $msg,
                     ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
@@ -112,8 +112,8 @@ class Importer
         // Datei-Größenprüfung
         foreach (['teaser.txt', 'article.txt'] as $file) {
             if (filesize($folderPath . '/' . $file) > $maxFileSize) {
-                $failed[] = basename($folderPath) . " (Datei zu groß: $file)";
-                $msg = "Datei zu groß: $file in $folderPath";
+                $failed[] = basename($folderPath) . " (File size too large: $file)";
+                $msg = "File size too large: $file in $folderPath";
                 $this->logger->error(
                     $msg,
                     ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
@@ -123,8 +123,8 @@ class Importer
         }
 
         $json = json_decode(file_get_contents($folderPath . '/news.json'), true);
-        if (!$json || empty($json['title']) || empty($json['dateShow'])) {
-            $msg = "Ungültige oder unvollständige news.json in $folderPath";
+        if (!$json || empty($json['title'])) {
+            $msg = "Invalid or incomplete news.json in news.json in $folderPath";
             $this->logger->error(
                 $msg,
                 ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
@@ -142,6 +142,7 @@ class Importer
         $article = file_get_contents($folderPath . '/article.txt');
         $article = preg_replace('/^\xEF\xBB\xBF/', '', $article);
         $articleHtml = $this->sanitizeHtml($article);
+        $articleHtml = $this->wrapTablesWithContentTableClass($articleHtml);
         $articleHtml = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $articleHtml);
 
         // News anlegen
@@ -151,10 +152,24 @@ class Importer
         $news->headline = $json['title'];
         $news->date = time();
         $news->author = $config->author;
-        $news->start = strtotime($json['dateShow'] . ' 00:00:01');
         $news->time = time();
         $news->published = !empty($config->auto_publish) ? 1 : 0;
         $news->teaser = $teaserHtml;
+        //Startzeit der News -> Anzeigedatum
+        $dateShow = $json['dateShow'] ?? '';
+
+        if ($dateShow !== '') {
+            $timestamp = strtotime($dateShow);
+            if ($timestamp !== false) {
+                $news->start = $timestamp;
+            } else {
+                $msg = "Invalid date format in news.json ($dateShow) in $folderPath";
+                $this->logger->info(
+                    $msg,
+                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                );
+            }
+        }
 
         // Alias generieren (wie Contao-Backend):
         $slugger = new AsciiSlugger('de'); // oder 'fr', 'en', je nach Sprache
@@ -176,11 +191,15 @@ class Importer
         $news->save();
 
         // Inhaltselemente erstellen
-        $this->createContentElement($news->id, $teaserHtml, 'newsPull__teaser');
+        $news->teaser_news = !empty($config->teaser_news) ? '1' : '';
+
+        if ($news->teaser_news === '1') {
+            $this->createContentElement($news->id, $teaserHtml, 'newsPull__teaser');
+        }
         $this->createContentElement($news->id, $articleHtml, 'newsPull__article');
 
         // Erfolgsmeldung für jede importierte News (optional)
-        $msg = sprintf('News "%s" (ID %d) importiert aus %s.', $news->headline, $news->id, $folderPath);
+        $msg = sprintf('News "%s" (ID %d) imported from %s.', $news->headline, $news->id, $folderPath);
         $this->logger->info(
             $msg,
             ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
@@ -223,7 +242,8 @@ class Importer
     {
         $allowedTags = [
             'p', 'a', 'strong', 'em', 'ul', 'ol', 'li', 'br', 'span', 'div',
-            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote'
+            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote',
+            'h1','h2','h3','h4','h5','h6'
         ];
 
         $allowedAttributes = [
@@ -241,6 +261,34 @@ class Importer
         return trim($doc->saveHTML());
     }
 
+    public function wrapTablesWithContentTableClass($html)
+    {
+        $doc = new \DOMDocument();
+        // Fehler unterdrücken, falls HTML nicht 100% valide
+        @$doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+
+        $tables = $doc->getElementsByTagName('table');
+        // Da getElementsByTagName live ist, erst alle Tabellen in ein Array kopieren
+        $tableNodes = [];
+        foreach ($tables as $table) {
+            $tableNodes[] = $table;
+        }
+
+        foreach ($tableNodes as $table) {
+            $wrapper = $doc->createElement('div');
+            $wrapper->setAttribute('class', 'content-table');
+            // Tabelle aus dem DOM entfernen und ins Wrapper-Div einfügen
+            $clonedTable = $table->cloneNode(true);
+            $wrapper->appendChild($clonedTable);
+            $table->parentNode->replaceChild($wrapper, $table);
+        }
+
+        // Rückgabe als HTML-String
+        $result = $doc->saveHTML();
+        // Optional: XML-Prolog entfernen
+        $result = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $result);
+        return $result;
+    }    
     private function cleanDomNode(\DOMNode $node, array $allowedTags, array $allowedAttributes): void
     {
         if ($node instanceof \DOMElement) {

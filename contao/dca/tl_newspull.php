@@ -39,13 +39,13 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
     ],
     'palettes' => [
         '__selector__' => [],
-        'default' => '{settings_legend},title,token,upload_dir,news_archive,author,auto_publish,batch_size,max_file_size'
+        'default' => '{settings_legend},title,token,upload_dir,news_archive,author,batch_size,max_file_size,auto_publish,teaser_news'
     ],
     'fields' => [
         'title' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['title'],
             'inputType' => 'text',
-            'eval' => ['mandatory' => true, 'maxlength' => 128, 'tl_class' => 'w100'],
+            'eval' => ['mandatory' => true, 'maxlength' => 128, 'tl_class' => 'w50'],
             'sql' => "varchar(128) NOT NULL default ''"
         ],        
         'id' => [
@@ -65,7 +65,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
                 'mandatory' => true,
                 'fieldType' => 'radio', 
                 'files' => false,       
-                'tl_class' => 'w50'
+                'tl_class' => 'clr w100'
             ],
             'sql' => "binary(16) NULL" 
         ],
@@ -106,8 +106,16 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
         'auto_publish' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['auto_publish'],
             'inputType' => 'checkbox',
-            'eval' => ['tl_class' => 'clr'],
+            'eval' => [
+                'tl_class' => 'w33'
+            ],
             'sql' => "char(1) NOT NULL default ''"
-        ]               
+        ],
+        'teaser_news' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['teaser_news'],
+            'inputType' => 'checkbox',
+            'eval' => ['tl_class' => 'w33'],
+            'sql' => "char(1) NOT NULL default ''"
+        ]                            
     ]
 ];
