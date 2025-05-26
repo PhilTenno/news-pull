@@ -23,7 +23,7 @@ class ImportController
             $configs = NewspullModel::findAll();
 
             if ($configs === null) {
-                return new Response('Keine Konfigurationen gefunden', 404);
+                return new Response('no Configuration found', 404);
             }
 
             $results = ['success' => 0, 'fail' => 0, 'failed' => []];
@@ -37,10 +37,10 @@ class ImportController
 
             header('Content-Type: text/plain');
             $total = $results['success'] + $results['fail'];
-            echo "{$results['success']} von $total News importiert, {$results['fail']} fehlgeschlagen\n";
+            echo "{$results['success']} of $total News imported, {$results['fail']} failed\n";
 
             if (!empty($results['failed'])) {
-                echo "Fehlgeschlagen:\n";
+                echo "failed:\n";
                 foreach ($results['failed'] as $fail) {
                     echo "- $fail\n";
                 }
@@ -58,10 +58,10 @@ class ImportController
 
             header('Content-Type: text/plain');
             $total = $result['success'] + $result['fail'];
-            echo "{$result['success']} von $total News importiert, {$result['fail']} fehlgeschlagen\n";
+            echo "{$result['success']} of $total News imported, {$result['fail']} failed\n";
 
             if (!empty($result['failed'])) {
-                echo "Fehlgeschlagen:\n";
+                echo "failed:\n";
                 foreach ($result['failed'] as $fail) {
                     echo "- $fail\n";
                 }

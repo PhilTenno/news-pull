@@ -4,8 +4,6 @@ namespace PhilTenno\NewsPull\Service;
 
 use Contao\ContentModel;
 use Contao\NewsModel;
-use Contao\NewsArchiveModel;
-use Contao\UserModel;
 use PhilTenno\NewsPull\Model\NewspullModel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
