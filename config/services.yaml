@@ -6,6 +6,13 @@ services:
   PhilTenno\NewsPull\Controller\ImportController:
     tags: ['controller.service_arguments']
 
+  PhilTenno\NewsPull\Controller\FrontendModule\RelatedNewsController:
+    tags: ['controller.service_arguments']
+    arguments:
+      $framework: '@contao.framework'
+      $cache: '@cache.app'
+      $contentUrlGenerator: '@contao.routing.content_url_generator'    
+
   PhilTenno\NewsPull\Service\Importer:
     arguments:
       $logger: '@logger'

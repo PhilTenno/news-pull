@@ -1,0 +1,46 @@
+<?php
+
+use Contao\CoreBundle\DataContainer\PaletteManipulator;
+
+// Add fields to tl_module for our frontend module
+$GLOBALS['TL_DCA']['tl_module']['fields']['newspull_max_results'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_module']['newspull_max_results'],
+    'inputType' => 'text',
+    'default' => 5,
+    'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'],
+    'sql' => "int(10) unsigned NOT NULL default 5"
+];
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['newspull_min_relevance'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_module']['newspull_min_relevance'],
+    'inputType' => 'text',
+    'default' => 1,
+    'eval' => ['rgxp' => 'natural', 'tl_class' => 'w50'],
+    'sql' => "int(10) unsigned NOT NULL default 1"
+];
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['newspull_cache_duration'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_module']['newspull_cache_duration'],
+    'inputType' => 'select',
+    'default' => 3600,
+    'options' => [
+        300 => '5 Minuten',
+        900 => '15 Minuten', 
+        1800 => '30 Minuten',
+        3600 => '1 Stunde',
+        7200 => '2 Stunden',
+        21600 => '6 Stunden',
+        43200 => '12 Stunden',
+        86400 => '24 Stunden'
+    ],
+    'eval' => ['tl_class' => 'w50'],
+    'sql' => "int(10) unsigned NOT NULL default 3600"
+];
+
+// Add palette for our module type
+$GLOBALS['TL_DCA']['tl_module']['palettes']['newspull_related'] = 
+    '{title_legend},name,headline,type;' .
+    '{config_legend},news_archives,newspull_max_results,newspull_min_relevance,newspull_cache_duration;' .
+    '{template_legend:hide},customTpl;' .
+    '{protected_legend:hide},protected;' .
+    '{expert_legend:hide},guests,cssID';
