@@ -1,6 +1,7 @@
 <?php
 
 use Contao\CoreBundle\DataContainer\PaletteManipulator;
+use Contao\Backend;
 
 // Add fields to tl_module for our frontend module
 $GLOBALS['TL_DCA']['tl_module']['fields']['newspull_max_results'] = [
@@ -44,3 +45,13 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['newspull_related'] =
     '{template_legend:hide},customTpl;' .
     '{protected_legend:hide},protected;' .
     '{expert_legend:hide},guests,cssID';
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['customTpl'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_module']['customTpl'],
+    'inputType' => 'select',
+    'options_callback' => static function () {
+        return Backend::getTemplateGroup('mod_newspull_related');
+    },
+    'eval' => ['includeBlankOption' => true, 'tl_class' => 'w50', 'chosen' => true],
+    'sql' => "varchar(64) NOT NULL default ''"
+];

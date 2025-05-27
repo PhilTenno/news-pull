@@ -2,18 +2,30 @@ services:
   PhilTenno\NewsPull\:
     resource: '../src/*'
     exclude: '../src/{DependencyInjection,Entity,Tests,Kernel.php}'
+    autowire: true
+    autoconfigure: true
 
   PhilTenno\NewsPull\Controller\ImportController:
     tags: ['controller.service_arguments']
-
-  PhilTenno\NewsPull\Controller\FrontendModule\RelatedNewsController:
-    tags: ['controller.service_arguments']
-    arguments:
-      $framework: '@contao.framework'
-      $cache: '@cache.app'
-      $contentUrlGenerator: '@contao.routing.content_url_generator'    
 
   PhilTenno\NewsPull\Service\Importer:
     arguments:
       $logger: '@logger'
       $params: '@parameter_bag'
+
+  # Template-Pfad für Twig registrieren
+  Contao\CoreBundle\Twig\TemplateLocator:
+    calls:
+      - method: addPath
+        arguments:
+          - '%kernel.project_dir%/templates/frontend'
+          - 'frontend'
+
+  # Template für Frontend-Modul registrieren
+  contao.twig.template_locator:
+    class: Contao\CoreBundle\Twig\TemplateLocator
+    calls:
+      - method: addTemplate
+        arguments:
+          - 'frontend_module/newspull_related'
+          - 'frontend/mod_newspull_related'
