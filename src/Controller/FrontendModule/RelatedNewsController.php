@@ -27,8 +27,8 @@ class RelatedNewsController extends AbstractFrontendModuleController
         // Get current news article from URL
         $currentNews = $this->getCurrentNewsArticle($request);
 
-        // KORREKT: Bundle-Template mit Namespace referenzieren!
-        $template->setName('@PhilTennoNewsPull/frontend_module/newspull_related.html.twig');
+        $templateName = $model->news_template ?: 'newspull_related';
+        $template->setName('@PhilTennoNewsPull/frontend_module/' . $templateName . '.html.twig');
 
         if (!$currentNews) {
             return new Response('');

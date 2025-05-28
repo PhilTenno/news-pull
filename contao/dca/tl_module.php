@@ -38,11 +38,24 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['newspull_cache_duration'] = [
     'sql' => "int(10) unsigned NOT NULL default 3600"
 ];
 
-// Add palette for our module type
+// Neues Feld für die Template-Auswahl hinzufügen
+$GLOBALS['TL_DCA']['tl_module']['fields']['news_template'] = [
+    'label' => &$GLOBALS['TL_LANG']['tl_module']['news_template'],
+    'default' => 'newspull_related', // Standard-Template-Name
+    'exclude' => true,
+    'inputType' => 'select',
+    'options_callback' => static function () {
+        return \Contao\Controller::getTemplateGroup('newspull_');
+    },
+    'eval' => ['tl_class' => 'w50'],
+    'sql' => "varchar(64) NOT NULL default ''"
+];
+
+// Palette für unser Modul anpassen und news_template hinzufügen
 $GLOBALS['TL_DCA']['tl_module']['palettes']['newspull_related'] = 
     '{title_legend},name,headline,type;' .
     '{config_legend},news_archives,newspull_max_results,newspull_min_relevance,newspull_cache_duration;' .
-    '{template_legend:hide},customTpl;' .
+    '{template_legend:hide},news_template,customTpl;' .  // news_template hier ergänzt
     '{protected_legend:hide},protected;' .
     '{expert_legend:hide},guests,cssID';
 
