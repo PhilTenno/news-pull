@@ -18,7 +18,7 @@ services:
     calls:
       - method: addPath
         arguments:
-          - '%kernel.project_dir%/templates/frontend'
+          - '%kernel.project_dir%/templates/frontend_module'
           - 'frontend'
 
   # Template für Frontend-Modul registrieren
@@ -28,4 +28,3 @@ services:
       - method: addTemplate
         arguments:
           - 'frontend_module/newspull_related'
-          - 'frontend/mod_newspull_related'

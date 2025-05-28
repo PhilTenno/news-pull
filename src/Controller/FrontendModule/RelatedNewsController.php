@@ -24,13 +24,11 @@ class RelatedNewsController extends AbstractFrontendModuleController
       file_put_contents(__DIR__ . '/controller_debug.log', "RelatedNewsController instantiated\n", FILE_APPEND);
     }
 
-
-
     protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
         // Get current news article from URL
         $currentNews = $this->getCurrentNewsArticle($request);
-        $template->setName('frontend/newspull_related');
+        $template->setName('frontend_module/newspull_related');
 
         if (!$currentNews) {
             return new Response('');
@@ -88,7 +86,6 @@ class RelatedNewsController extends AbstractFrontendModuleController
 
         return $template->getResponse();
     }
-
 
     private function getCurrentNewsArticle(Request $request): ?NewsModel
     {

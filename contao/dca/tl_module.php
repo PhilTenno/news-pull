@@ -49,9 +49,6 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['newspull_related'] =
 $GLOBALS['TL_DCA']['tl_module']['fields']['customTpl'] = [
     'label' => &$GLOBALS['TL_LANG']['tl_module']['customTpl'],
     'inputType' => 'select',
-    'options_callback' => static function () {
-        return Backend::getTemplateGroup('mod_newspull_related');
-    },
     'eval' => ['includeBlankOption' => true, 'tl_class' => 'w50', 'chosen' => true],
     'sql' => "varchar(64) NOT NULL default ''"
 ];
