@@ -12,19 +12,3 @@ services:
     arguments:
       $logger: '@logger'
       $params: '@parameter_bag'
-
-  # Template-Pfad für Twig registrieren
-  Contao\CoreBundle\Twig\TemplateLocator:
-    calls:
-      - method: addPath
-        arguments:
-          - '%kernel.project_dir%/templates/frontend_module'
-          - 'frontend'
-
-  # Template für Frontend-Modul registrieren
-  contao.twig.template_locator:
-    class: Contao\CoreBundle\Twig\TemplateLocator
-    calls:
-      - method: addTemplate
-        arguments:
-          - 'frontend_module/newspull_related'

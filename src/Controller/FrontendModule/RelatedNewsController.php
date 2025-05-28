@@ -20,15 +20,15 @@ class RelatedNewsController extends AbstractFrontendModuleController
 {
     public function __construct(
         private ContaoFramework $framework,       
-    ) { 
-      file_put_contents(__DIR__ . '/controller_debug.log', "RelatedNewsController instantiated\n", FILE_APPEND);
-    }
+    ) { }
 
     protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
         // Get current news article from URL
         $currentNews = $this->getCurrentNewsArticle($request);
-        $template->setName('frontend_module/newspull_related');
+
+        // KORREKT: Bundle-Template mit Namespace referenzieren!
+        $template->setName('@PhilTennoNewsPull/frontend_module/newspull_related.html.twig');
 
         if (!$currentNews) {
             return new Response('');

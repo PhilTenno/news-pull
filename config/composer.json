@@ -1,0 +1,25 @@
+{
+    "type": "project",
+    "require": {
+        "contao/conflicts": "*@dev",
+        "contao/manager-bundle": "5.3.*",
+        "contao/calendar-bundle": "5.3.*",
+        "contao/comments-bundle": "5.3.*",
+        "contao/faq-bundle": "5.3.*",
+        "contao/listing-bundle": "5.3.*",
+        "contao/news-bundle": "5.3.*",
+        "contao/newsletter-bundle": "5.3.*"
+    },
+    "extra": {
+        "public-dir": "web",
+        "contao-component-dir": "assets"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "@php vendor/bin/contao-setup"
+        ],
+        "post-update-cmd": [
+            "@php vendor/bin/contao-setup"
+        ]
+    }
+}
