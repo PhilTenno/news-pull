@@ -15,7 +15,7 @@ use PhilTenno\NewsPull\Model\NewspullKeywordsModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-#[AsFrontendModule('newspull_related', category: 'news')]
+#[AsFrontendModule(template:'newspull_related', category: 'news')]
 class RelatedNewsController extends AbstractFrontendModuleController
 {
     public function __construct(
@@ -28,7 +28,8 @@ class RelatedNewsController extends AbstractFrontendModuleController
         $currentNews = $this->getCurrentNewsArticle($request);
 
         $templateName = $model->news_template ?: 'newspull_related';
-        $template->setName('@PhilTennoNewsPull/frontend_module/' . $templateName . '.html.twig');
+        $template->setName($model->customTpl ?: 'frontend_module/newspull_related.html.twig');
+        dump($templateName); die();
 
         if (!$currentNews) {
             return new Response('');

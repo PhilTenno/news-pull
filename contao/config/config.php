@@ -12,3 +12,5 @@ $GLOBALS['BE_MOD']['system']['news_pull']['tables'][] = 'tl_newspull_keywords';
 
 // Models registrieren
 $GLOBALS['TL_MODELS']['tl_newspull_keywords'] = 'PhilTenno\NewsPull\Model\NewspullKeywordsModel';
+
+$GLOBALS['FE_MOD']['news_pull']['newspull_related'] = PhilTenno\NewsPull\Controller\FrontendModule\RelatedNewsController::class;
