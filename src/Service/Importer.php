@@ -12,6 +12,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Contao\FilesModel;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Symfony\Component\String\Slugger\AsciiSlugger;
+use PhilTenno\NewsPull\Model\NewspullKeywordsModel;
 
 sleep(1);
 
@@ -187,6 +188,23 @@ class Importer
             $news->description = $json['metaDescription'];
         }
         $news->save();
+
+        // Keywords importieren, falls vorhanden
+        if (!empty($json['keywords'])) {
+            // Keywords normalisieren (z. B. Leerzeichen trimmen)
+            $keywords = implode(',', array_map('trim', explode(',', $json['keywords'])));
+
+            // Prüfen, ob für diese News schon ein Keyword-Datensatz existiert (Doppelimport vermeiden)
+            $existingKeywords = NewspullKeywordsModel::findByPid((int)$news->id);
+            if ($existingKeywords === null) {
+                $keywordModel = new NewspullKeywordsModel();
+                $keywordModel->pid = (int)$news->id;
+                $keywordModel->keywords = $keywords;
+                $keywordModel->tstamp = time();
+                $keywordModel->save();
+            }
+        }
+
 
         // Inhaltselemente erstellen
         $news->teaser_news = !empty($config->teaser_news) ? '1' : '';

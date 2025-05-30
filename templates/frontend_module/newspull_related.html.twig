@@ -1,0 +1,32 @@
+{% set newsList = related_news ?? [] %}
+
+<div class="mod_newspull_related">
+  <h2>{{ headline }}</h2>
+
+  {% if newsList|length > 0 %}
+    <ul class="related-news-list">
+      {% for item in newsList %}
+        <li class="related-news-item">
+          <a href="{{ item.article.getAbsoluteUrl() }}">
+            {{ item.article.headline|e }}
+          </a>
+          {% if not is_fallback %}
+            <span class="related-news-relevance">
+              ({{ item.relevance }} {{ item.relevance == 1 ? 'Treffer' : 'Treffer' }})
+            </span>
+          {% endif %}
+          <span class="related-news-date">
+            {{ item.date|date('d.m.Y') }}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+    {% if is_fallback %}
+      <p class="related-news-fallback-hint">
+        Es wurden keine verwandten Artikel gefunden. Hier sind die letzten 3 News aus dem gleichen Archiv.
+      </p>
+    {% endif %}
+  {% else %}
+    <p>Keine verwandten Artikel gefunden.</p>
+  {% endif %}
+</div>

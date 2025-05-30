@@ -12,4 +12,3 @@ services:
     arguments:
       $logger: '@logger'
       $params: '@parameter_bag'
- 
