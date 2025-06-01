@@ -6,39 +6,31 @@ namespace PhilTenno\NewsPull\Controller\FrontendModule;
 
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\ModuleModel;
 use Contao\NewsModel;
-use Contao\StringUtil;
 use PhilTenno\NewsPull\Model\NewspullKeywordsModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-#[AsFrontendModule('newspull_related',category: 'news', template:'newspull_related')]
+#[AsFrontendModule('newspullrelated', category: 'news', template: 'frontend_module/newspullrelated')]
 class RelatedNewsController extends AbstractFrontendModuleController
 {
     public function __construct(
-        private ContaoFramework $framework,       
+        private \Contao\CoreBundle\Framework\ContaoFramework $framework
     ) { }
 
     protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
-        // Get current news article from URL
         $currentNews = $this->getCurrentNewsArticle($request);
-
-        $templateName = $model->news_template ?: 'newspull_related';
-        $template->setName($model->customTpl ?: 'frontend_module/newspull_related.html.twig');
 
         if (!$currentNews) {
             return new Response('');
         }
 
-        // Get keywords for current article
         $keywordsModel = NewspullKeywordsModel::findByPid($currentNews->id);
         $keywords = $keywordsModel ? $keywordsModel->keywords : '';
 
-        // Find related articles
         $archives = \Contao\StringUtil::deserialize($model->news_archives, true);
         $relatedResults = [];
         if ($keywords) {
@@ -55,7 +47,6 @@ class RelatedNewsController extends AbstractFrontendModuleController
         foreach ($relatedResults as $result) {
             $newsArticle = NewsModel::findByPk($result['pid']);
             if ($newsArticle && $newsArticle->published) {
-                // Check if article is in selected archives
                 if (!empty($archives) && !in_array($newsArticle->pid, $archives)) {
                     continue;
                 }
@@ -68,7 +59,6 @@ class RelatedNewsController extends AbstractFrontendModuleController
             }
         }
 
-        // Sort by relevance, then by date (newer first)
         usort($relatedNews, function($a, $b) {
             if ($a['relevance'] === $b['relevance']) {
                 return $b['article']->date <=> $a['article']->date;
@@ -76,7 +66,6 @@ class RelatedNewsController extends AbstractFrontendModuleController
             return $b['relevance'] <=> $a['relevance'];
         });
 
-        // Fallback: Wenn keine verwandten News gefunden wurden, zeige die letzten 3 News aus dem gleichen Archiv (außer die aktuelle)
         if (empty($relatedNews)) {
             $fallbackNews = [];
             $archiveId = $currentNews->pid;
@@ -109,15 +98,20 @@ class RelatedNewsController extends AbstractFrontendModuleController
         return $template->getResponse();
     }
 
-    private function getCurrentNewsArticle(Request $request): ?NewsModel
+    private function getCurrentNewsArticle(Request $request): ?\Contao\NewsModel
     {
-        // Get news from auto_item or items parameter
-        $alias = $request->query->get('auto_item') ?: $request->query->get('items');
-        
-        if (!$alias) {
+        $alias = $request->attributes->get('auto_item');
+        if (empty($alias)) {
+            $alias = $request->query->get('items');
+        }
+        if (empty($alias) || !is_string($alias)) {
             return null;
         }
-
-        return NewsModel::findByIdOrAlias($alias);
+        $currentNews = \Contao\NewsModel::findByIdOrAlias($alias);
+        if ($currentNews instanceof \Contao\NewsModel) {
+            return $currentNews;
+        } else {
+            return null;
+        }
     }
 }

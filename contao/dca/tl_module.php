@@ -38,17 +38,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['newspull_cache_duration'] = [
     'sql' => "int(10) unsigned NOT NULL default 3600"
 ];
 
-$GLOBALS['TL_DCA']['tl_module']['fields']['customTpl'] = [
-    'label' => &$GLOBALS['TL_LANG']['tl_module']['customTpl'],
-    'inputType' => 'select',
-    'options_callback' => static function () {
-        return \Contao\Controller::getTemplateGroup('newspull_');
-    },    
-    'eval' => ['includeBlankOption' => true, 'tl_class' => 'w50', 'chosen' => true],
-    'sql' => "varchar(64) NOT NULL default ''"
-];
-
-
 // Feld: news_archives (Standardfeld aus News-Bundle)
 $GLOBALS['TL_DCA']['tl_module']['fields']['news_archives'] = [
     'label' => &$GLOBALS['TL_LANG']['tl_module']['news_archives'],
@@ -59,7 +48,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['news_archives'] = [
 ];
 
 // Palette (komplett, wie gewünscht)
-$GLOBALS['TL_DCA']['tl_module']['palettes']['newspull_related'] = 
+$GLOBALS['TL_DCA']['tl_module']['palettes']['newspullrelated'] = 
     '{title_legend},name,headline,type;' .
-    '{config_legend},newspull_max_results,newspull_min_relevance,newspull_cache_duration,news_archives;' .
-    '{template_legend},customTpl;';
+    '{config_legend},newspull_max_results,newspull_min_relevance,newspull_cache_duration,news_archives;';
