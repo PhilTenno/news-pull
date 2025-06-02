@@ -1,1 +1,30 @@
-<h1>Hallo aus dem Bundle-Template!</h1>
+{# Resources/contao/templates/frontend_module/newspullrelated.html.twig #}
+
+<section class="mod_newspullrelated">
+    {% if headline_text %}
+        <{{ headline_unit }}>{{ headline_text }}</{{ headline_unit }}>
+    {% endif %}
+
+    {% if related_news is not empty %}
+        <ul class="related-news-list">
+            {% for item in related_news %}
+                <li>
+                    <a href="{{ item.url }}">
+                      {{ item.article.headline|striptags }}
+                    </a>
+                    <span class="date">{{ item.date|date('d.m.Y') }}</span>
+                    {% if not is_fallback %}
+                        <span class="relevance">Relevanz: {{ item.relevance }}</span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+        {% if is_fallback %}
+            <p class="fallback-hint">
+                Es konnten keine passenden Artikel gefunden werden. Hier sind die neuesten aus dem gleichen Archiv.
+            </p>
+        {% endif %}
+    {% else %}
+        <p>Keine verwandten Artikel gefunden.</p>
+    {% endif %}
+</section>

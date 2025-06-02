@@ -3,6 +3,8 @@
 use Contao\CoreBundle\DataContainer\PaletteManipulator;
 use Contao\Backend;
 
+error_log('tl_module DCA wurde geladen');
+
 // Add fields to tl_module for our frontend module
 $GLOBALS['TL_DCA']['tl_module']['fields']['newspull_max_results'] = [
     'label' => &$GLOBALS['TL_LANG']['tl_module']['newspull_max_results'],
