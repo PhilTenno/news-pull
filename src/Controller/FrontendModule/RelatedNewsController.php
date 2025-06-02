@@ -46,14 +46,24 @@ class RelatedNewsController extends AbstractFrontendModuleController
         }
 
         $relatedNews = [];
+
+        $crossArchives = (bool) $model->newspull_crossarchives;
         foreach ($relatedResults as $result) {
             $newsArticle = NewsModel::findByPk($result['pid']);
             if ($newsArticle && $newsArticle->published) {
-                if (!empty($archives) && !in_array($newsArticle->pid, $archives)) {
-                    continue;
+                if (!$crossArchives) {
+                    // Nur Artikel aus demselben Archiv wie der aktuelle Artikel
+                    if ($newsArticle->pid !== $currentNews->pid) {
+                        continue;
+                    }
+                } else {
+                    // Optional: Wenn trotzdem nur bestimmte Archive erlaubt sind
+                    if (!empty($archives) && !in_array($newsArticle->pid, $archives)) {
+                        continue;
+                    }
                 }
 
-                // URL für den Artikel generieren (ohne getFrontendUrl)
+                // URL für den Artikel generieren (wie gehabt)
                 $archive = \Contao\NewsArchiveModel::findByPk($newsArticle->pid);
                 $url = '/'; // Fallback
                 if ($archive && $archive->jumpTo) {
@@ -68,7 +78,9 @@ class RelatedNewsController extends AbstractFrontendModuleController
                     'relevance' => $result['relevance'],
                     'date' => date('Y-m-d', $newsArticle->date),
                     'datetime' => date('c', $newsArticle->date),
-                    'url' => $url
+                    'url' => $url,
+                    'keywords' => $result['keywords'],
+                    'common_keywords' => $result['common_keywords']
                 ];
             }
         }

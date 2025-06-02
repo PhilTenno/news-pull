@@ -1,6 +1,6 @@
 {# Resources/contao/templates/frontend_module/newspullrelated.html.twig #}
 
-<section class="mod_newspullrelated">
+<div class="mod_newspullrelated">
     {% if headline_text %}
         <{{ headline_unit }}>{{ headline_text }}</{{ headline_unit }}>
     {% endif %}
@@ -13,9 +13,13 @@
                       {{ item.article.headline|striptags }}
                     </a>
                     <span class="date">{{ item.date|date('d.m.Y') }}</span>
+                    {#
                     {% if not is_fallback %}
-                        <span class="relevance">Relevanz: {{ item.relevance }}</span>
+                    #}
+                        <span class="relevance">Relevanz: {{ item.relevance }} - {{ item.keywords }}</span>
+                    {#
                     {% endif %}
+                    #}
                 </li>
             {% endfor %}
         </ul>
@@ -27,4 +31,4 @@
     {% else %}
         <p>Keine verwandten Artikel gefunden.</p>
     {% endif %}
-</section>
+</div>

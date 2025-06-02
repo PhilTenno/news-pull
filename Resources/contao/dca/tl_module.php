@@ -40,16 +40,26 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['newspull_cache_duration'] = [
     'sql' => "int(10) unsigned NOT NULL default 3600"
 ];
 
+//Verwandte Artikel aus unterscheidlichen Archiven
+$GLOBALS['TL_DCA']['tl_module']['fields']['newspull_crossarchives'] = [
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['newspull_crossarchives'],
+    'exclude'   => true,
+    'inputType' => 'checkbox',
+    'eval'      => ['tl_class'=>'w50'],
+    'sql'       => "char(1) NOT NULL default ''"
+];
+
 // Feld: news_archives (Standardfeld aus News-Bundle)
 $GLOBALS['TL_DCA']['tl_module']['fields']['news_archives'] = [
     'label' => &$GLOBALS['TL_LANG']['tl_module']['news_archives'],
     'inputType' => 'checkbox',
     'foreignKey' => 'tl_news_archive.title',
-    'eval' => ['multiple' => true, 'tl_class' => 'w100'],
+    'eval' => ['multiple' => true, 'tl_class' => 'w50'],
     'sql' => "blob NULL",
 ];
 
 // Palette (komplett, wie gewünscht)
 $GLOBALS['TL_DCA']['tl_module']['palettes']['newspullrelated'] = 
     '{title_legend},name,headline,type;' .
-    '{config_legend},newspull_max_results,newspull_min_relevance,newspull_cache_duration,news_archives;';
+    '{config_legend},newspull_max_results,newspull_min_relevance,newspull_cache_duration,news_archives,newspull_crossarchives;';
+

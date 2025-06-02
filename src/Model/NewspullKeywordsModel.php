@@ -32,12 +32,10 @@ class NewspullKeywordsModel extends Model
             return [];
         }
 
-        $keywordArray = array_map('trim', explode(',', strtolower($keywords)));
+        $keywordArray = array_filter(array_map('trim', preg_split('/[,;\\s]+/', strtolower($keywords))));
         $results = [];
 
-        // Get all keyword records
         $objKeywords = static::findAll();
-        
         if (!$objKeywords) {
             return [];
         }
@@ -47,29 +45,28 @@ class NewspullKeywordsModel extends Model
                 continue;
             }
 
-            $recordKeywords = array_map('trim', explode(',', strtolower($keywordRecord->keywords)));
-            $relevance = 0;
-
-            // Calculate relevance based on keyword matches
-            foreach ($keywordArray as $searchKeyword) {
-                foreach ($recordKeywords as $recordKeyword) {
-                    if (strpos($recordKeyword, $searchKeyword) !== false || 
-                        strpos($searchKeyword, $recordKeyword) !== false) {
-                        $relevance++;
-                    }
+            // KORREKT: Archiv-Filter auf Basis der News-Archiv-ID
+            if (!empty($archives)) {
+                $news = \Contao\NewsModel::findByPk($keywordRecord->pid);
+                if (!$news || !in_array($news->pid, $archives)) {
+                    continue;
                 }
             }
+
+            $recordKeywords = array_filter(array_map('trim', preg_split('/[,;\\s]+/', strtolower($keywordRecord->keywords))));
+            $common = array_intersect($keywordArray, $recordKeywords);
+            $relevance = count($common);
 
             if ($relevance >= $minRelevance) {
                 $results[] = [
                     'pid' => $keywordRecord->pid,
                     'relevance' => $relevance,
-                    'keywords' => $keywordRecord->keywords
+                    'keywords' => $keywordRecord->keywords,
+                    'common_keywords' => implode(', ', $common)
                 ];
             }
         }
 
-        // Sort by relevance (desc) and limit results
         usort($results, function($a, $b) {
             return $b['relevance'] <=> $a['relevance'];
         });
