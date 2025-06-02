@@ -8,6 +8,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use PhilTenno\NewsPull\Service\Importer;
 use PhilTenno\NewsPull\Model\NewspullModel;
+use PhilTenno\NewsPull\Model\NewspullKeywordsModel;
+use Contao\NewsModel;
 
 class ImportController
 {
@@ -17,6 +19,18 @@ class ImportController
         $framework->initialize();
 
         $token = $request->query->getString('token');
+
+        // --- Aufräumen: Verwaiste Keyword-Einträge löschen ---
+        $allKeywords = NewspullKeywordsModel::findAll();
+        if ($allKeywords !== null) {
+            foreach ($allKeywords as $keywordEntry) {
+                $news = NewsModel::findByPk($keywordEntry->pid);
+                if ($news === null) {
+                    $keywordEntry->delete();
+                }
+            }
+        }
+        // --- Ende Aufräumen ---
 
         if ($token === 'all') {
             // Alle Konfigurationen importieren
