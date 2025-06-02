@@ -24,6 +24,9 @@ class RelatedNewsController extends AbstractFrontendModuleController
 
     protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
+
+error_log('LANG: ' . print_r($GLOBALS['TL_LANG']['MSC']['newspull_read_article'], true));
+
         $currentNews = $this->getCurrentNewsArticle($request);
 
         if (!$currentNews) {
@@ -133,6 +136,11 @@ class RelatedNewsController extends AbstractFrontendModuleController
         $headlineData = \Contao\StringUtil::deserialize($model->headline);
         $template->set('headline_unit', $headlineData['unit'] ?? 'h2');
         $template->set('headline_text', $headlineData['value'] ?? 'Verwandte Artikel');
+        
+        $template->set('cssID', $model->cssID);
+        $template->set('read_article_title', $GLOBALS['TL_LANG']['MSC']['newspull_read_article'] ?? "Artikel: '%s' lesen");
+        $template->set('no_related', $GLOBALS['TL_LANG']['MSC']['newspull_no_related'] ?? 'Keine verwandten Artikel gefunden.');
+
 
         return $template->getResponse();
     }

@@ -1,34 +1,27 @@
 {# Resources/contao/templates/frontend_module/newspullrelated.html.twig #}
 
-<div class="mod_newspullrelated">
-    {% if headline_text %}
-        <{{ headline_unit }}>{{ headline_text }}</{{ headline_unit }}>
-    {% endif %}
-
+<div {% if cssID[0] %}id="{{ cssID[0] }}"{% endif %} class="newspullRelated{% if cssID[1] %} {{ cssID[1] }}{% endif %}">
     {% if related_news is not empty %}
-        <ul class="related-news-list">
+        {% if headline_text %}
+          <{{ headline_unit }} class="newspullRelated__headline">{{ headline_text }}</{{ headline_unit }}>
+        {% endif %}
+        <ul class="newspullRelated__list">
             {% for item in related_news %}
-                <li>
-                    <a href="{{ item.url }}">
+                <li class="newspullRelated__listItem">
+                    <a href="{{ item.url }}" title="{{ read_article_title|format(item.article.headline|striptags) }}">
                       {{ item.article.headline|striptags }}
                     </a>
-                    <span class="date">{{ item.date|date('d.m.Y') }}</span>
-                    {#
-                    {% if not is_fallback %}
-                    #}
-                        <span class="relevance">Relevanz: {{ item.relevance }} - {{ item.keywords }}</span>
-                    {#
+                    <span class="newspullRelated__date">{{ item.date|date('d.m.Y') }}</span>
+                    {% if item.relevance > 0 %}
+                      <span class="newspullRelated__relevance"><strong>Relevanz:</strong> {{ item.relevance }}</span>
                     {% endif %}
-                    #}
+                    {% if item.keywords %}
+                      <span class="newspullRelated__keywords"><strong>Keywords:</strong> {{ item.keywords }}</span>
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>
-        {% if is_fallback %}
-            <p class="fallback-hint">
-                Es konnten keine passenden Artikel gefunden werden. Hier sind die neuesten aus dem gleichen Archiv.
-            </p>
-        {% endif %}
     {% else %}
-        <p>Keine verwandten Artikel gefunden.</p>
+        <p>{{ no_related }}</p>
     {% endif %}
 </div>
