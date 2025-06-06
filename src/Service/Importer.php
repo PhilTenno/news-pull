@@ -14,12 +14,10 @@ use Contao\CoreBundle\Monolog\ContaoContext;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 use PhilTenno\NewsPull\Model\NewspullKeywordsModel;
 
-sleep(1);
-
 class Importer
 {
     private string $projectDir;
-    
+
     public function __construct(
         private readonly LoggerInterface $logger,
         ParameterBagInterface $params
@@ -29,7 +27,7 @@ class Importer
 
     public function runImport(NewspullModel $config): array
     {
-        $uploadDir = $config->upload_dir; // binary(16)
+        $uploadDir = $config->upload_dir;
         $model = FilesModel::findByUuid($uploadDir);
 
         if ($model !== null) {
@@ -47,8 +45,6 @@ class Importer
         $maxFileSize = ($config->max_file_size ?? 256) * 1024; // in bytes
 
         $fs = new Filesystem();
-        $finder = new Finder();
-
         if (!$fs->exists($uploadDir)) {
             $msg = "Upload directory does not exist: $uploadDir";
             $this->logger->error(
@@ -58,25 +54,46 @@ class Importer
             return ['success' => 0, 'fail' => 0];
         }
 
-        $folders = iterator_to_array($finder->in($uploadDir)->directories()->depth(0)->sortByName());
+        // Alle news*.json außer *_error.json finden
+        $finder = new Finder();
+        $finder->files()
+            ->in($uploadDir)
+            ->name('/^news.*\.json$/i')
+            ->notName('/_error\.json$/i')
+            ->sortByName();
+
         $imported = 0;
         $errors = 0;
         $failed = [];
 
-        foreach ($folders as $index => $folder) {
-            if ($index > 0 && $index % $batchSize === 0) {
-                sleep(2); // zur Serverentlastung
-            }
+        foreach ($finder as $file) {
+            $filePath = $file->getRealPath();
+            $fileName = $file->getFilename();
+            $importDate = date('Y-m-d H:i:s');
 
-            $folderPath = $folder->getRealPath();
-
-            // Fehlerhafte Ordner überspringen
-            if (str_ends_with($folderPath, '_error')) {
+            // Dateigröße prüfen
+            $fileSize = filesize($filePath);
+            if ($fileSize > $maxFileSize) {
+                $errorFile = preg_replace('/\.json$/i', '_error.json', $filePath);
+                rename($filePath, $errorFile);
+                $msg = "Fehler NewsPull $importDate: Datei zu groß ($fileSize Bytes)";
+                $this->logger->error(
+                    $msg,
+                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                );
+                $errors++;
+                $failed[] = "$fileName (Datei zu groß)";
+                sleep(2); // Pause nach jeder Datei
                 continue;
             }
 
-            $result = $this->importNewsFolder($folderPath, $config, $maxFileSize, $failed);
-            $result ? $imported++ : $errors++;
+            // Datei einlesen und News importieren
+            $result = $this->importNewsJsonFile($filePath, $config, $batchSize, $importDate, $failed);
+            $imported += $result['success'];
+            $errors += $result['fail'];
+            // Fehlerhafte Items werden im $failed-Array gesammelt
+
+            sleep(2); // Pause nach jeder Datei
         }
 
         // Zusammenfassende Log-Ausgabe nach dem Import
@@ -92,109 +109,131 @@ class Importer
             'failed' => $failed,
         ];
     }
-    private function importNewsFolder(string $folderPath, NewspullModel $config, int $maxFileSize, array &$failed): bool
+
+    private function importNewsJsonFile(string $filePath, NewspullModel $config, int $batchSize, string $importDate, array &$failed): array
     {
-        $requiredFiles = ['news.json', 'teaser.txt', 'article.txt'];
+        $fs = new Filesystem();
+        $fileName = basename($filePath);
 
-        foreach ($requiredFiles as $file) {
-            if (!file_exists($folderPath . '/' . $file)) {
-                $failed[] = basename($folderPath) . " (missing file: $file)";
-                $msg = "missing file: $file in $folderPath";
-                $this->logger->error(
-                    $msg,
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-                );
-                return $this->markFolderAsError($folderPath);
-            }
-        }
-
-        // Datei-Größenprüfung
-        foreach (['teaser.txt', 'article.txt'] as $file) {
-            if (filesize($folderPath . '/' . $file) > $maxFileSize) {
-                $failed[] = basename($folderPath) . " (File size too large: $file)";
-                $msg = "File size too large: $file in $folderPath";
-                $this->logger->error(
-                    $msg,
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-                );
-                return $this->markFolderAsError($folderPath);
-            }
-        }
-
-        $json = json_decode(file_get_contents($folderPath . '/news.json'), true);
-        if (!$json || empty($json['title'])) {
-            $msg = "Invalid or incomplete news.json in news.json in $folderPath";
+        $json = json_decode(file_get_contents($filePath), true);
+        if (!is_array($json)) {
+            // Ganze Datei fehlerhaft
+            $errorFile = preg_replace('/\.json$/i', '_error.json', $filePath);
+            rename($filePath, $errorFile);
+            $msg = "Fehler NewsPull $importDate: Datei nicht lesbar oder kein Array";
             $this->logger->error(
                 $msg,
                 ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
             );
-            return $this->markFolderAsError($folderPath);
+            $failed[] = "$fileName (Datei nicht lesbar)";
+            return ['success' => 0, 'fail' => 1];
         }
 
-        // Sanitize Text
-        $teaser = file_get_contents($folderPath . '/teaser.txt');
-        $teaser = preg_replace('/^\xEF\xBB\xBF/', '', $teaser); // BOM entfernen
-        $teaserHtml = $this->sanitizeHtml($teaser);
-        // Prolog nach dem Sanitizen entfernen
-        $teaserHtml = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $teaserHtml);
+        $success = 0;
+        $fail = 0;
+        $errorItems = [];
+        $itemCount = count($json);
 
-        $article = file_get_contents($folderPath . '/article.txt');
-        $article = preg_replace('/^\xEF\xBB\xBF/', '', $article);
-        $articleHtml = $this->sanitizeHtml($article);
-        $articleHtml = $this->wrapTablesWithContentTableClass($articleHtml);
-        $articleHtml = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $articleHtml);
+        foreach (array_chunk($json, $batchSize, true) as $batch) {
+            foreach ($batch as $idx => $item) {
+                $itemNr = $idx + 1;
+                $error = $this->validateNewsItem($item);
+                if ($error !== null) {
+                    $msg = "NewsPull $importDate: Item Nr. $itemNr fehlerhaft ($error)";
+                    $this->logger->error(
+                        $msg,
+                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                    );
+                    $fail++;
+                    $failed[] = "$fileName: Item $itemNr ($error)";
+                    $errorItems[] = $item;
+                    continue;
+                }
 
-        // News anlegen
+                // Importiere Item
+                $this->importNewsItem($item, $config);
+                $success++;
+            }
+            sleep(2); // Pause nach jedem Batch
+        }
+
+        // Fehlerhafte Items in news_error.json speichern, falls vorhanden
+        if (count($errorItems) > 0) {
+            $errorFile = preg_replace('/\.json$/i', '_error.json', $filePath);
+            file_put_contents($errorFile, json_encode(array_values($errorItems), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            $msg = "Fehler NewsPull $importDate: $fail fehlerhafte Items in $fileName";
+            $this->logger->error(
+                $msg,
+                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+            );
+        }
+
+        // Datei löschen, wenn alle erfolgreich
+        if ($success === $itemCount) {
+            $fs->remove($filePath);
+            $msg = "NewsPull $importDate erfolgreich importiert";
+            $this->logger->info(
+                $msg,
+                ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+            );
+        } elseif ($success > 0) {
+            // Teilweise Erfolg: Originaldatei löschen, Fehlerdatei bleibt
+            $fs->remove($filePath);
+        } else {
+            // Alle fehlerhaft: Originaldatei löschen, Fehlerdatei bleibt
+            $fs->remove($filePath);
+        }
+
+        return ['success' => $success, 'fail' => $fail];
+    }
+
+    private function validateNewsItem(array $item): ?string
+    {
+        if (empty($item['title'])) {
+            return 'title fehlt';
+        }
+        if (empty($item['teaser'])) {
+            return 'teaser fehlt';
+        }
+        if (empty($item['article'])) {
+            return 'article fehlt';
+        }
+        return null;
+    }
+
+    private function importNewsItem(array $item, NewspullModel $config): void
+    {
+        // --- Hier bleibt die Logik wie bisher, nur die Quelle ist jetzt das Array $item ---
         $news = new NewsModel();
         $news->pid = $config->news_archive;
         $news->tstamp = time();
-        $news->headline = $json['title'];
+        $news->headline = $item['title'];
         $news->date = time();
         $news->author = $config->author;
         $news->time = time();
         $news->published = !empty($config->auto_publish) ? 1 : 0;
-        $news->teaser = $teaserHtml;
-        //Startzeit der News -> Anzeigedatum
-        $dateShow = $json['dateShow'] ?? '';
-
+        $news->teaser = $this->sanitizeHtml($item['teaser']);
+        $dateShow = $item['dateShow'] ?? '';
         if ($dateShow !== '') {
             $timestamp = strtotime($dateShow);
             if ($timestamp !== false) {
                 $news->start = $timestamp;
-            } else {
-                $msg = "Invalid date format in news.json ($dateShow) in $folderPath";
-                $this->logger->info(
-                    $msg,
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-                );
             }
         }
-
-        // Alias generieren (wie Contao-Backend):
-        $slugger = new AsciiSlugger('de'); // oder 'fr', 'en', je nach Sprache
-        $alias = strtolower($slugger->slug($json['title'])->toString());
-
-        // Prüfe auf Kollisionen:
+        $slugger = new AsciiSlugger('de');
+        $alias = strtolower($slugger->slug($item['title'])->toString());
         $existing = NewsModel::findByAlias($alias);
         if ($existing !== null) {
             $alias .= '-' . uniqid();
         }
         $news->alias = $alias;
-
-        if (!empty($json['metaTitle'])) {
-            $news->pageTitle = $json['metaTitle'];
-        }
-        if (!empty($json['metaDescription'])) {
-            $news->description = $json['metaDescription'];
-        }
+        $news->pageTitle = !empty($item['metaTitle']) ? $item['metaTitle'] : $item['title'];
+        $news->description = !empty($item['metaDescription']) ? $item['metaDescription'] : $item['teaser'];
         $news->save();
 
-        // Keywords importieren, falls vorhanden
-        if (!empty($json['keywords'])) {
-            // Keywords normalisieren (z. B. Leerzeichen trimmen)
-            $keywords = implode(',', array_map('trim', explode(',', $json['keywords'])));
-
-            // Prüfen, ob für diese News schon ein Keyword-Datensatz existiert (Doppelimport vermeiden)
+        // Keywords wie gehabt
+        if (!empty($item['keywords'])) {
+            $keywords = implode(',', array_map('trim', explode(',', $item['keywords'])));
             $existingKeywords = NewspullKeywordsModel::findByPid((int)$news->id);
             if ($existingKeywords === null) {
                 $keywordModel = new NewspullKeywordsModel();
@@ -205,26 +244,17 @@ class Importer
             }
         }
 
-
-        // Inhaltselemente erstellen
+        // Inhaltselemente wie gehabt
         $news->teaser_news = !empty($config->teaser_news) ? '1' : '';
-
         if ($news->teaser_news === '1') {
-            $this->createContentElement($news->id, $teaserHtml, 'newsPull__teaser');
+            $this->createContentElement($news->id, $news->teaser, 'newsPull__teaser');
         }
+        $articleHtml = $this->sanitizeHtml($item['article']);
+        $articleHtml = $this->wrapTablesWithContentTableClass($articleHtml);
         $this->createContentElement($news->id, $articleHtml, 'newsPull__article');
-
-        // Erfolgsmeldung für jede importierte News (optional)
-        $msg = sprintf('News "%s" (ID %d) imported from %s.', $news->headline, $news->id, $folderPath);
-        $this->logger->info(
-            $msg,
-            ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
-        );
-
-        // Ordner löschen
-        $this->deleteFolder($folderPath);
-        return true;
     }
+
+    // ... (Restliche Methoden wie createContentElement, sanitizeHtml, wrapTablesWithContentTableClass bleiben unverändert)
     private function createContentElement(int $pid, string $html, string $cssClass): void
     {
         $content = new ContentModel();
@@ -236,22 +266,6 @@ class Importer
         $content->cssID = serialize(['', $cssClass]);
         $content->tstamp = time();
         $content->save();
-    }
-
-    private function deleteFolder(string $folderPath): void
-    {
-        $fs = new Filesystem();
-        $fs->remove($folderPath);
-    }
-
-    private function markFolderAsError(string $folderPath): bool
-    {
-        $newPath = $folderPath . '_error';
-        if (file_exists($newPath)) {
-            $newPath .= '_' . uniqid();
-        }
-        rename($folderPath, $newPath);
-        return false;
     }
 
     private function sanitizeHtml(string $html): string
