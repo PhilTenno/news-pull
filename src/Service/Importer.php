@@ -203,6 +203,11 @@ class Importer
 
     private function importNewsItem(array $item, NewspullModel $config): void
     {
+
+$this->logger->info('no_htmltags: ' . var_export($config->no_htmltags, true));
+$this->logger->info('no_imagetags: ' . var_export($config->no_imagetags, true));
+
+
         // --- Hier bleibt die Logik wie bisher, nur die Quelle ist jetzt das Array $item ---
         $news = new NewsModel();
         $news->pid = $config->news_archive;
@@ -212,7 +217,7 @@ class Importer
         $news->author = $config->author;
         $news->time = time();
         $news->published = !empty($config->auto_publish) ? 1 : 0;
-        $news->teaser = $this->sanitizeHtml($item['teaser']);
+        $news->teaser = $this->stripHtmlTags($item['teaser']);
         $dateShow = $item['dateShow'] ?? '';
         if ($dateShow !== '') {
             $timestamp = strtotime($dateShow);
@@ -249,7 +254,20 @@ class Importer
         if ($news->teaser_news === '1') {
             $this->createContentElement($news->id, $news->teaser, 'newsPull__teaser');
         }
-        $articleHtml = $this->sanitizeHtml($item['article']);
+
+        // Artikel ggf. manipulieren
+        $articleHtml = $item['article'];
+
+        if (!empty($config->no_htmltags)) {
+            // Alle HTML-Tags entfernen (plain text)
+            $articleHtml = $this->stripHtmlTags($articleHtml);
+        } elseif (!empty($config->no_imagetags)) {
+            // Nur <img>-Tags entfernen, Rest bleibt erhalten
+            $articleHtml = $this->removeImageTags($articleHtml);
+        }
+
+        // Jetzt das manipulierte $articleHtml weiterverarbeiten!
+        $articleHtml = $this->sanitizeHtml($articleHtml);
         $articleHtml = $this->wrapTablesWithContentTableClass($articleHtml);
         $this->createContentElement($news->id, $articleHtml, 'newsPull__article');
     }
@@ -338,4 +356,14 @@ class Importer
         $this->cleanDomNode($child, $allowedTags, $allowedAttributes);
       }
     }
+    private function stripHtmlTags(string $html): string
+    {
+        // Entfernt alle HTML-Tags und trimmt das Ergebnis
+        return trim(strip_tags($html));
+    }
+    private function removeImageTags(string $html): string
+    {
+        // Entfernt alle <img ...> Tags, lässt den Rest des HTML unangetastet
+        return preg_replace('/<img\b[^>]*>/i', '', $html);
+    }    
 }
