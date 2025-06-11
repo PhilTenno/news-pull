@@ -190,13 +190,13 @@ class Importer
     private function validateNewsItem(array $item): ?string
     {
         if (empty($item['title'])) {
-            return 'title fehlt';
+            return 'title fehlt/missing';
         }
         if (empty($item['teaser'])) {
-            return 'teaser fehlt';
+            return 'teaser fehlt/missing';
         }
         if (empty($item['article'])) {
-            return 'article fehlt';
+            return 'article fehlt/missing';
         }
         return null;
     }
