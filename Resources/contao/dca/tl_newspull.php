@@ -38,7 +38,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
     ],
     'palettes' => [
         '__selector__' => [],
-        'default' => '{settings_legend},title,token,upload_dir,news_archive,author,batch_size,max_file_size,teaser_news,no_htmltags,no_imagetags,auto_publish'
+        'default' => '{settings_legend},title,token,upload_dir,news_archive,author,batch_size,max_file_size,auto_publish,teaser_news,no_htmltags,no_imagetags'
     ],
     'fields' => [
         'title' => [
@@ -113,7 +113,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
         'teaser_news' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['teaser_news'],
             'inputType' => 'checkbox',
-            'eval' => ['tl_class' => 'w33'],
+            'eval' => ['tl_class' => 'w66'],
             'sql' => "char(1) NOT NULL default ''"
         ],
         'no_htmltags' => [
