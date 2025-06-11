@@ -203,11 +203,6 @@ class Importer
 
     private function importNewsItem(array $item, NewspullModel $config): void
     {
-
-$this->logger->info('no_htmltags: ' . var_export($config->no_htmltags, true));
-$this->logger->info('no_imagetags: ' . var_export($config->no_imagetags, true));
-
-
         // --- Hier bleibt die Logik wie bisher, nur die Quelle ist jetzt das Array $item ---
         $news = new NewsModel();
         $news->pid = $config->news_archive;
@@ -265,7 +260,10 @@ $this->logger->info('no_imagetags: ' . var_export($config->no_imagetags, true));
             // Nur <img>-Tags entfernen, Rest bleibt erhalten
             $articleHtml = $this->removeImageTags($articleHtml);
         }
-
+        if (!empty($config->linktarget)) {
+            //Links manipulieren ->target ->noopener
+            $articleHtml = $this->addTargetAndRelToLinks($articleHtml);
+        }
         // Jetzt das manipulierte $articleHtml weiterverarbeiten!
         $articleHtml = $this->sanitizeHtml($articleHtml);
         $articleHtml = $this->wrapTablesWithContentTableClass($articleHtml);
@@ -365,5 +363,38 @@ $this->logger->info('no_imagetags: ' . var_export($config->no_imagetags, true));
     {
         // Entfernt alle <img ...> Tags, lässt den Rest des HTML unangetastet
         return preg_replace('/<img\b[^>]*>/i', '', $html);
-    }    
+    }  
+    private function addTargetAndRelToLinks(string $html): string
+    {
+        if (stripos($html, '<a ') === false) {
+            return $html; // Keine Links vorhanden, nichts zu tun
+        }
+
+        $doc = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+
+        $links = $doc->getElementsByTagName('a');
+        foreach ($links as $link) {
+            // target='_blank' setzen, falls nicht vorhanden
+            if (!$link->hasAttribute('target') || strtolower($link->getAttribute('target')) !== '_blank') {
+                $link->setAttribute('target', '_blank');
+            }
+            // rel='nofollow noopener' setzen, falls nicht vorhanden oder unvollständig
+            $rel = $link->getAttribute('rel');
+            $rels = array_map('trim', explode(' ', $rel));
+            if (!in_array('nofollow', $rels, true)) {
+                $rels[] = 'nofollow';
+            }
+            if (!in_array('noopener', $rels, true)) {
+                $rels[] = 'noopener';
+            }
+            $link->setAttribute('rel', trim(implode(' ', array_filter($rels))));
+        }
+
+        $result = $doc->saveHTML();
+        // Optional: XML-Prolog entfernen
+        $result = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $result);
+        return $result;
+    }      
 }
