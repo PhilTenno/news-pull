@@ -1,5 +1,5 @@
 # News Pull
-## Contao Erweiterung für den automatischen Import von News
+## Contao Erweiterung für den automatisierten Import von News - N8N
 ```
 'News Pull' ist eine Contao-Erweiterung für den automatischen Import von Neuigkeiten. 
 Über Konfigurationen im Backend können hierbei mehrere News-Archive des 
