@@ -2,7 +2,7 @@
   "name": "philtenno/news-pull",
   "description": "Contao-Erweiterung zum Importieren von News aus Ordnern.",
   "type": "contao-bundle",
-  "license": "MIT",
+  "license": "proprietary",
   "require": {
     "php": ">=8.2",
     "contao/core-bundle": "^5.3",
