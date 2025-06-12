@@ -1,14 +1,19 @@
 # News Pull
 ## Contao Erweiterung für den automatischen Import von News
 ```
-'News Pull' ist eine Extension für den automatischen Import von Neuigkeiten. Über Konfigurationen im Backend können hierbei mehrere News-Archive des Contao-News-Bundles
-unabhängig von einander befüllt werden. Alle importierten News lassen sich im Anschluss wie gewohnt im Backend weiter bearbeiten oder direkt automatisch veröffentlichen. 
+'News Pull' ist eine Extension für den automatischen Import von Neuigkeiten. 
+Über Konfigurationen im Backend können hierbei mehrere News-Archive des 
+Contao-News-Bundles unabhängig von einander befüllt werden. 
+Alle importierten News lassen sich im Anschluss wie gewohnt im Backend 
+weiter bearbeiten oder direkt automatisch veröffentlichen. 
 Das Importformat ist Json.
 ```
 ```
-'News Pull' ermöglicht somit das Automatisieren von Neuigkeiten mit Hilfe von Plattformen wie z.B. 'https://n8n.io'. 
-Ein Frontend-Modul ermöglicht zusätzlich das Anzeigen verwandter Artikel auf Basis der Keywords. Das Frontendmodul
-muss hierfür einfach nach dem Contao-News-Reader-Modul eingefügt werden.
+'News Pull' ermöglicht somit das Automatisieren von Neuigkeiten mit Hilfe 
+von Plattformen wie z.B. 'https://n8n.io'. 
+Ein Frontend-Modul ermöglicht zusätzlich das Anzeigen verwandter Artikel 
+auf Basis der Keywords. Das Frontendmodul kann hierfür einfach nach dem 
+Contao-News-Reader-Modul eingefügt werden.
 ```
 ```
 Aufbau Json:
@@ -16,7 +21,7 @@ Aufbau Json:
   {
   'title': 'News-Titel 1',
   'teaser': 'Teaer-Text',
-  'article': 'Artikel-Text: erlaubt ist reiner Text und/oder HTML-Elemenmte, die auch in Editoren (z.B. TinyMc) zur Verfügung stehen',
+  'article': 'Artikel-Text: erlaubt ist reiner Text und/oder HTML-Elemenmte',
   'metaTitle': 'Meta-Titel der News', // -> optional: Fallback = title 
   'metaDescription': 'Meta Beschreibung des Artikels', // -> optional: Fallback = teaser
   'dateShow': '2025-06-10 04:06:00', // -> optional: Datum, ab wann der Artikel sichtbar geschaltet werden soll
