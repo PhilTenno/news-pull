@@ -6,7 +6,7 @@ unabhängig von einander befüllt werden. Alle importierten News lassen sich im 
 Das Importformat ist Json.
 ```
 ```
-'News Pull' ermöglicht somit das Automatisieren von Neuigkeiten mit Hilfe von Plattformen wie z.B. '[N8N](https://n8n.io/)'. 
+'News Pull' ermöglicht somit das Automatisieren von Neuigkeiten mit Hilfe von Plattformen wie z.B. 'https://n8n.io'. 
 Ein Frontend-Modul ermöglicht zusätzlich das Anzeigen verwandter Artikel auf Basis der Keywords. Das Frontendmodul
 muss hierfür einfach nach dem Contao-News-Reader-Modul eingefügt werden.
 ```
