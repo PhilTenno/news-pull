@@ -21,11 +21,11 @@ Aufbau Json:
   {
   'title': 'News-Titel 1',
   'teaser': 'Teaer-Text',
-  'article': 'Artikel-Text: erlaubt ist reiner Text und/oder HTML-Elemenmte',
+  'article': 'Artikel-Text: erlaubt ist reiner Text und/oder HTML-Elemenmte wie in TinyMx',
   'metaTitle': 'Meta-Titel der News', // -> optional: Fallback = title 
   'metaDescription': 'Meta Beschreibung des Artikels', // -> optional: Fallback = teaser
-  'dateShow': '2025-06-10 04:06:00', // -> optional: Datum, ab wann der Artikel sichtbar geschaltet werden soll
-  'keywords': 'keywords-1,keywords-2,keywords-3' // -> optional: Keywords zum Herstellen von Verwandten Artikeln
+  'dateShow': '2025-06-10 04:06:00', // -> optional: Datum, wann der Artikel sichtbar sein soll
+  'keywords': 'keywords-1,keywords-2,keywords-3' // -> optional: Keywords für verwandte Artikeln
   },
   {
   'title': 'News-Titel 2',
