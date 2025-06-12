@@ -40,9 +40,10 @@ Aufbau Json:
 ]
 ```
 ### Anwendungsmöglichkeiten
+```
 --> News
 --> Magazine
 --> SEO
 --> Intranetveröffentlichungen
-
+```
 *made with love by [hardbitrocker](https://hardbitrocker.de)*
