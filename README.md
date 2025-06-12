@@ -1,11 +1,16 @@
+#News Pull
+##Contao Bundle für den automatischen Import von News
+```
 'News Pull' ist eine Extension für den automatischen Import von Neuigkeiten. Über Konfigurationen im Backend können hierbei mehrere News-Archive des Contao-News-Bundles
 unabhängig von einander befüllt werden. Alle importierten News lassen sich im Anschluss wie gewohnt im Backend weiter bearbeiten oder direkt automatisch veröffentlichen. 
 Das Importformat ist Json.
-
+```
+```
 'News Pull' ermöglicht somit das Automatisieren von Neuigkeiten mit Hilfe von Plattformen wie z.B. '[N8N](https://n8n.io/)'. 
 Ein Frontend-Modul ermöglicht zusätzlich das Anzeigen verwandter Artikel auf Basis der Keywords. Das Frontendmodul
 muss hierfür einfach nach dem Contao-News-Reader-Modul eingefügt werden.
-
+```
+```
 Aufbau Json:
 [
   {
@@ -26,7 +31,6 @@ Aufbau Json:
   'dateShow': '2025-06-12 00:01:00', 
   'keywords': 'keywords-1,keywords-2,keywords-3'
   },
-
   {...}
-
 ]
+```
