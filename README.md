@@ -1,5 +1,5 @@
 # News Pull
-## Contao Bundle für den automatischen Import von News
+## Contao Erweiterung für den automatischen Import von News
 ```
 'News Pull' ist eine Extension für den automatischen Import von Neuigkeiten. Über Konfigurationen im Backend können hierbei mehrere News-Archive des Contao-News-Bundles
 unabhängig von einander befüllt werden. Alle importierten News lassen sich im Anschluss wie gewohnt im Backend weiter bearbeiten oder direkt automatisch veröffentlichen. 
