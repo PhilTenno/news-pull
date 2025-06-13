@@ -1,8 +1,19 @@
 {
   "name": "philtenno/news-pull",
-  "description": "Contao-Erweiterung zum Importieren von News aus Ordnern.",
+  "description": "Contao-Erweiterung zum Importieren von News.",
+  "keywords": ["contao", "news", "import"],
   "type": "contao-bundle",
   "license": "proprietary",
+  "authors":[
+      {
+          "name":"Hardbitrocker",
+          "homepage":"https://www.hardbitrocker.de"
+      }
+  ],
+  "funding": [{
+      "type": "github",
+      "url": "https://github.com/PhilTenno"
+  }],  
   "require": {
     "php": ">=8.2",
     "contao/core-bundle": "^5.3",

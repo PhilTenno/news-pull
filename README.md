@@ -39,6 +39,11 @@ Aufbau Json:
   {...}
 ]
 ```
+### Installation
+```
+$ composer require philtenno/news-pull
+```
+
 ### Anwendungsmöglichkeiten
 ```
 --> News
