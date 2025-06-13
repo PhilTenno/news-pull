@@ -15,7 +15,7 @@
       "url": "https://github.com/PhilTenno"
   }],  
   "require": {
-    "php": ">=8.2",
+    "php": "^8.2",
     "contao/core-bundle": "^5.3",
     "contao/news-bundle": "^5.3"
   },
