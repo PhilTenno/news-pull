@@ -6,7 +6,8 @@
 Contao-News-Bundles unabhängig von einander befüllt werden. 
 Alle importierten News lassen sich im Anschluss wie gewohnt im Backend 
 weiter bearbeiten oder direkt automatisch veröffentlichen. 
-Das Importformat ist Json.
+Das Importformat ist Json. Der Import erfolgt über den Aufruf:
+https://domain.com/newspullimport?token=dein_token / ?token=all
 ```
 ```
 'News Pull' ermöglicht somit das Automatisieren von Neuigkeiten mit Hilfe 
