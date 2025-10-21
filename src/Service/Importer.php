@@ -256,21 +256,18 @@ class Importer
         if (!empty($config->no_htmltags)) {
             // Alle HTML-Tags entfernen (plain text)
             $articleHtml = $this->stripHtmlTags($articleHtml);
-        } elseif (!empty($config->no_imagetags)) {
-            // Nur <img>-Tags entfernen, Rest bleibt erhalten
-            $articleHtml = $this->removeImageTags($articleHtml);
-        }
+        } 
         if (!empty($config->linktarget)) {
             //Links manipulieren ->target ->noopener
             $articleHtml = $this->addTargetAndRelToLinks($articleHtml);
         }
         // Jetzt das manipulierte $articleHtml weiterverarbeiten!
         $articleHtml = $this->sanitizeHtml($articleHtml);
+        $articleHtml = $this->addFigureWrapperToImages($articleHtml);        
         $articleHtml = $this->wrapTablesWithContentTableClass($articleHtml);
         $this->createContentElement($news->id, $articleHtml, 'newsPull__article');
     }
 
-    // ... (Restliche Methoden wie createContentElement, sanitizeHtml, wrapTablesWithContentTableClass bleiben unverändert)
     private function createContentElement(int $pid, string $html, string $cssClass): void
     {
         $content = new ContentModel();
@@ -288,8 +285,9 @@ class Importer
     {
         $allowedTags = [
             'p', 'a', 'strong', 'em','u','i','b','br', 'ul', 'ol', 'li', 'br', 'span', 'div',
-            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote','pre','code','img',
-            'h1','h2','h3','h4','h5','h6','svg','path', 'rect', 'circle', 'g', 'line', 'polyline', 'polygon', 'ellipse', 'text', 'defs', 'use', 'symbol', 'clipPath', 'mask'
+            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote','pre','code','img','sub','sup',
+            'h1','h2','h3','h4','h5','h6','svg','path', 'rect', 'circle', 'g', 'line', 'polyline', 'polygon',
+            'ellipse', 'text', 'defs', 'use', 'symbol', 'clipPath', 'mask', 'figure', 'figcaption','article','section'
         ];
 
         $allowedAttributes = [
@@ -335,7 +333,55 @@ class Importer
         // Optional: XML-Prolog entfernen
         $result = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $result);
         return $result;
-    }    
+    }   
+    
+    private function addFigureWrapperToImages(string $html): string
+    {
+        // Wenn kein <img> vorkommt, spare DOM-Overhead
+        if (stripos($html, '<img') === false) {
+            return $html;
+        }
+
+        $doc = new \DOMDocument();
+
+        // Robust gegen unvollständiges HTML
+        libxml_use_internal_errors(true);
+        @$doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+
+        // Alle <img>-Elemente holen (live NodeList -> erst in Array kopieren)
+        $images = $doc->getElementsByTagName('img');
+        $imgNodes = [];
+        foreach ($images as $img) {
+            $imgNodes[] = $img;
+        }
+
+        foreach ($imgNodes as $img) {
+            // Prüfen, ob der direkte Parent bereits eine <figure> ist
+            $parent = $img->parentNode;
+            if ($parent instanceof \DOMElement && strcasecmp($parent->tagName, 'figure') === 0) {
+                continue;
+            }
+
+            // Wrapper <figure class="newspull__figure"> erzeugen
+            $wrapper = $doc->createElement('figure');
+            $wrapper->setAttribute('class', 'newspull__figure');
+            
+            // IMG klonen und ins Wrapper-<figure> einfügen
+            $clonedImg = $img->cloneNode(true);
+            $wrapper->appendChild($clonedImg);
+            
+            // Wrapper an Stelle des Original-IMG einfügen
+            $img->parentNode->replaceChild($wrapper, $img);
+        }
+
+        // Rückgabe als HTML-String
+        $result = $doc->saveHTML();
+        // Optional: XML-Prolog entfernen
+        $result = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $result);
+
+        return $result;
+    }
+
     private function cleanDomNode(\DOMNode $node, array $allowedTags, array $allowedAttributes): void
     {
       if ($node instanceof \DOMElement) {
@@ -359,11 +405,6 @@ class Importer
         // Entfernt alle HTML-Tags und trimmt das Ergebnis
         return trim(strip_tags($html));
     }
-    private function removeImageTags(string $html): string
-    {
-        // Entfernt alle <img ...> Tags, lässt den Rest des HTML unangetastet
-        return preg_replace('/<img\b[^>]*>/i', '', $html);
-    }  
     private function addTargetAndRelToLinks(string $html): string
     {
         if (stripos($html, '<a ') === false) {

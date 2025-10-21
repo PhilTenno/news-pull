@@ -122,12 +122,6 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
             'eval' => ['tl_class' => 'w33'],
             'sql' => "char(1) NOT NULL default ''"
         ],
-        'no_imagetags' => [
-            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['no_imagetags'],
-            'inputType' => 'checkbox',
-            'eval' => ['tl_class' => 'w33'],
-            'sql' => "char(1) NOT NULL default ''"
-        ],
         'linktarget' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['linktarget'],
             'inputType' => 'checkbox',

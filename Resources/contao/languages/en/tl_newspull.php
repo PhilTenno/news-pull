@@ -9,7 +9,6 @@ $GLOBALS['TL_LANG']['tl_newspull']['batch_size'] = ['Batch size', 'Number of new
 $GLOBALS['TL_LANG']['tl_newspull']['max_file_size'] = ['Maximum file size', 'size per file in KB'];
 $GLOBALS['TL_LANG']['tl_newspull']['teaser_news'] = ['Teaser inside article', 'include teaser inside article'];
 $GLOBALS['TL_LANG']['tl_newspull']['no_htmltags'] = ['Delete HTML Tags', 'delete all HTML, including images'];
-$GLOBALS['TL_LANG']['tl_newspull']['no_imagetags'] = ['Delete Image Tags', 'delete only image tags'];
 $GLOBALS['TL_LANG']['tl_newspull']['linktarget'] = ['Link Target', 'open Link in new window incl. nofollow/noopener'];
 
 $GLOBALS['TL_LANG']['tl_newspull']['settings_legend'] = 'Import Settings';
