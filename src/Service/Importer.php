@@ -235,6 +235,7 @@ class Importer
         $news->description = !empty($item['metaDescription']) ? $item['metaDescription'] : $item['teaser'];
         $news->save();
         
+
         //
         // Optionales Bild-CE als erstes Element (vor Teaser/Text)
         //
@@ -278,11 +279,15 @@ class Importer
                 $ce->sorting   = $sorting;
                 $ce->singleSRC = $fileModel->uuid; // UUID (binary(16))
                 if ($imageSizeValid) {
-                    $ce->size = $imageSizeId;     // tl_image_size.id
+                    $ce->size = serialize([0, 0, $imageSizeId]);
                 }
-                $ce->overwriteMeta = '1';
+                
+                // Metadaten überschreiben - separate Felder in Contao 5.x
+                $ce->overwriteMeta = 1;
                 $ce->alt = $altText;
-                $ce->imageTitle = $imageAlt !== '' ? $imageAlt : '';  // Optional: Title setzen
+                $ce->imageTitle = '';
+                $ce->cssID = serialize(['', 'newspull__image']);
+
                 $ce->save();
             } else {
                 // Datei nicht in tl_files – versuche gezielt zu registrieren
@@ -310,9 +315,15 @@ class Importer
                             $ce->sorting   = $sorting;
                             $ce->singleSRC = $fileModel->uuid;
                             if ($imageSizeValid) {
-                                $ce->size = $imageSizeId;
+                                $ce->size = serialize([0, 0, $imageSizeId]);
                             }
+                            
+                            // Metadaten überschreiben - separate Felder in Contao 5.x
+                            $ce->overwriteMeta = 1;
                             $ce->alt = $altText;
+                            $ce->imageTitle = '';
+                            $ce->cssID = serialize(['', 'newspull__image']);
+                            
                             $ce->save();
 
                             $this->logger->info(
@@ -338,7 +349,7 @@ class Importer
                     );
                 }
             }            
-        }         
+        }
 
         //
         //Bild Ende
