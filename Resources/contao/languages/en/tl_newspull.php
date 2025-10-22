@@ -2,6 +2,8 @@
 $GLOBALS['TL_LANG']['tl_newspull']['title'] = ['Title', 'configuration name'];
 $GLOBALS['TL_LANG']['tl_newspull']['token'] = ['Token', 'import URL: https://your-domain.com/newspullimport?token=Your_Token or =all'];
 $GLOBALS['TL_LANG']['tl_newspull']['upload_dir'] = ['Upload directory', 'path below /files'];
+$GLOBALS['TL_LANG']['tl_newspull']['image_dir'] = ['Image directory', 'image files folder'];
+$GLOBALS['TL_LANG']['tl_newspull']['image_size'] = ['Image size ID', 'id of image size'];
 $GLOBALS['TL_LANG']['tl_newspull']['news_archive'] = ['News archive', 'target archive for new news'];
 $GLOBALS['TL_LANG']['tl_newspull']['author'] = ['Author', 'will be set as author'];
 $GLOBALS['TL_LANG']['tl_newspull']['auto_publish'] = ['Publish automatically', 'publish news immediately'];

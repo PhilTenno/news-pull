@@ -13,6 +13,7 @@ use Contao\FilesModel;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 use PhilTenno\NewsPull\Model\NewspullKeywordsModel;
+use Contao\ImageSizeModel;
 
 class Importer
 {
@@ -230,6 +231,74 @@ class Importer
         $news->pageTitle = !empty($item['metaTitle']) ? $item['metaTitle'] : $item['title'];
         $news->description = !empty($item['metaDescription']) ? $item['metaDescription'] : $item['teaser'];
         $news->save();
+        
+        //
+        // Optionales Bild-CE als erstes Element (vor Teaser/Text)
+        //
+
+        $image = $item['image'] ?? '';
+        $imageAlt = $item['imageAlt'] ?? '';
+
+        if ($image !== '') {
+
+            // 1) Ordnerpfad aus Job-Konfiguration (Fallback: files/)
+            $folderPath = 'files';
+            if (!empty($config->image_dir)) {
+                $folderModel = FilesModel::findByUuid($config->image_dir);
+                if ($folderModel !== null && $folderModel->type === 'folder' && !empty($folderModel->path)) {
+                    $folderPath = $folderModel->path;
+                }
+            }
+
+            // 2) Bildpfad bilden (image enthält nur Dateiname, keine Unterordner)
+            $filePath = rtrim($folderPath, '/') . '/' . ltrim($image, '/');
+
+            // 3) Datei in tl_files suchen
+            $fileModel = FilesModel::findByPath($filePath);
+
+            if ($fileModel !== null) {
+                // 4) Bildgröße validieren (ungültig → ohne size)
+                $imageSizeId = (int) ($config->image_size ?? 0);
+                $imageSizeValid = $imageSizeId > 0 && ImageSizeModel::findByPk($imageSizeId) !== null;
+
+                // 5) Alt-Text (Fallback)
+                $altText = $imageAlt !== '' ? $imageAlt : 'Artikel Bild';
+
+                // 6) Sorting kleiner als das Text-CE (Text nutzt 128)
+                $sorting = 64;
+
+                $ce = new ContentModel();
+                $ce->tstamp    = time();
+                $ce->ptable    = 'tl_news';
+                $ce->pid       = (int) $news->id;
+                $ce->type      = 'image';
+                $ce->sorting   = $sorting;
+                $ce->singleSRC = $fileModel->uuid; // UUID (binary(16))
+                if ($imageSizeValid) {
+                    $ce->size = $imageSizeId;     // tl_image_size.id
+                }
+                $ce->alt = $altText;
+                $ce->save();
+            } else {
+                // Datei nicht in tl_files – Import bleibt erfolgreich, Bild wird nur übersprungen
+                $absPath = $this->projectDir . '/' . $filePath;
+                if (!file_exists($absPath)) {
+                    $this->logger->warning(
+                        sprintf('Bild übersprungen: Datei nicht gefunden (%s)', $filePath),
+                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+                    );
+                } else {
+                    $this->logger->warning(
+                        sprintf('Bild übersprungen: Datei im Dateisystem vorhanden, aber nicht in tl_files (%s)', $filePath),
+                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+                    );
+                }
+            }
+        }         
+
+        //
+        //Bild Ende
+        //
 
         // Keywords wie gehabt
         if (!empty($item['keywords'])) {
