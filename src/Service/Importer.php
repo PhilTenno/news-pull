@@ -14,6 +14,7 @@ use Contao\CoreBundle\Monolog\ContaoContext;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 use PhilTenno\NewsPull\Model\NewspullKeywordsModel;
 use Contao\ImageSizeModel;
+use Contao\Dbafs;
 
 class Importer
 {
@@ -97,12 +98,14 @@ class Importer
             sleep(2); // Pause nach jeder Datei
         }
 
-        // Zusammenfassende Log-Ausgabe nach dem Import
-        $summaryMsg = sprintf('News import: %d successful, %d failed.', $imported, $errors);
-        $this->logger->info(
-            $summaryMsg,
-            ['contao' => new ContaoContext(__METHOD__, $errors > 0 ? ContaoContext::ERROR : ContaoContext::CRON)]
-        );
+        // Zusammenfassende Log-Ausgabe nur bei tatsächlichem Import
+        if ($imported > 0 || $errors > 0) {
+            $summaryMsg = sprintf('News import: %d successful, %d failed.', $imported, $errors);
+            $this->logger->info(
+                $summaryMsg,
+                ['contao' => new ContaoContext(__METHOD__, $errors > 0 ? ContaoContext::ERROR : ContaoContext::CRON)]
+            );
+        }
 
         return [
             'success' => $imported,
@@ -277,23 +280,64 @@ class Importer
                 if ($imageSizeValid) {
                     $ce->size = $imageSizeId;     // tl_image_size.id
                 }
+                $ce->overwriteMeta = '1';
                 $ce->alt = $altText;
+                $ce->imageTitle = $imageAlt !== '' ? $imageAlt : '';  // Optional: Title setzen
                 $ce->save();
             } else {
-                // Datei nicht in tl_files – Import bleibt erfolgreich, Bild wird nur übersprungen
+                // Datei nicht in tl_files – versuche gezielt zu registrieren
                 $absPath = $this->projectDir . '/' . $filePath;
-                if (!file_exists($absPath)) {
+
+                if (is_file($absPath)) {
+                    // Datei existiert im Dateisystem – gezielt in tl_files registrieren
+                    try {
+                        Dbafs::addResource($filePath);
+                        // Nach Registrierung erneut suchen
+                        $fileModel = FilesModel::findByPath($filePath);
+
+                        if ($fileModel !== null) {
+                            // Jetzt registriert – Bild-CE anlegen
+                            $imageSizeId = (int) ($config->image_size ?? 0);
+                            $imageSizeValid = $imageSizeId > 0 && ImageSizeModel::findByPk($imageSizeId) !== null;
+                            $altText = $imageAlt !== '' ? $imageAlt : 'Artikel Bild';
+                            $sorting = 64;
+
+                            $ce = new ContentModel();
+                            $ce->tstamp    = time();
+                            $ce->ptable    = 'tl_news';
+                            $ce->pid       = (int) $news->id;
+                            $ce->type      = 'image';
+                            $ce->sorting   = $sorting;
+                            $ce->singleSRC = $fileModel->uuid;
+                            if ($imageSizeValid) {
+                                $ce->size = $imageSizeId;
+                            }
+                            $ce->alt = $altText;
+                            $ce->save();
+
+                            $this->logger->info(
+                                sprintf('Bild automatisch registriert und CE angelegt: %s', $filePath),
+                                ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+                            );
+                        } else {
+                            $this->logger->warning(
+                                sprintf('Bild konnte nicht registriert werden: %s', $filePath),
+                                ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+                            );
+                        }
+                    } catch (\Throwable $e) {
+                        $this->logger->error(
+                            sprintf('Dbafs::addResource fehlgeschlagen für %s – %s', $filePath, $e->getMessage()),
+                            ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                        );
+                    }
+                } else {
                     $this->logger->warning(
                         sprintf('Bild übersprungen: Datei nicht gefunden (%s)', $filePath),
                         ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
                     );
-                } else {
-                    $this->logger->warning(
-                        sprintf('Bild übersprungen: Datei im Dateisystem vorhanden, aber nicht in tl_files (%s)', $filePath),
-                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
-                    );
                 }
-            }
+            }            
         }         
 
         //
