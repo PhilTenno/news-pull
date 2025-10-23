@@ -21,12 +21,14 @@ Aufbau Json:
 [
   {
   'title': 'News-Titel 1',
-  'teaser': 'Teaer-Text',
+  'teaser': 'Teaser-Text',
   'article': 'Artikel-Text: erlaubt ist reiner Text und/oder HTML-Elemenmte wie in TinyMce',
   'metaTitle': 'Meta-Titel der News', // -> optional: Fallback = title 
   'metaDescription': 'Meta Beschreibung des Artikels', // -> optional: Fallback = teaser
   'dateShow': '2025-06-10 04:06:00', // -> optional: Datum, wann der Artikel sichtbar sein soll
-  'keywords': 'keywords-1,keywords-2,keywords-3' // -> optional: Keywords für verwandte Artikel
+  'keywords': 'keywords-1,keywords-2,keywords-3', // -> optional: Keywords für verwandte Artikel
+  'image': 'Name eines Bildes', // -> imagage.jpg // -> optional, wenn ein Bild separat auf den Server geladen wurde
+  'imageAlt': 'Alt Beschreibung' // -> Bildbeschreibung des Bildes // -> optional
   },
   {
   'title': 'News-Titel 2',
@@ -36,6 +38,8 @@ Aufbau Json:
   'metaDescription': 'Meta Beschreibung 2',
   'dateShow': '2025-06-12 00:01:00', 
   'keywords': 'keywords-1,keywords-2,keywords-3'
+  'image': 'image.jpg',
+  'imageAlt': 'ein wunderschönes Bild'
   },
   {...}
 ]
