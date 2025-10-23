@@ -57,6 +57,13 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
         'sorting' => [
             'sql' => "int(10) unsigned NOT NULL default 0"
         ],        
+        'news_archive' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['news_archive'],
+            'inputType' => 'select',
+            'foreignKey' => 'tl_news_archive.title',
+            'eval' => ['mandatory' => true, 'tl_class' => 'w50'],
+            'sql' => "int(10) unsigned NOT NULL default 0"
+        ], 
         'upload_dir' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['upload_dir'],
             'inputType' => 'fileTree',
@@ -67,14 +74,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
                 'tl_class' => 'w50'
             ],
             'sql' => "binary(16) NULL" 
-        ],
-        'news_archive' => [
-            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['news_archive'],
-            'inputType' => 'select',
-            'foreignKey' => 'tl_news_archive.title',
-            'eval' => ['mandatory' => true, 'tl_class' => 'w50'],
-            'sql' => "int(10) unsigned NOT NULL default 0"
-        ], 
+        ],        
         'image_size' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['image_size'],
             'inputType' => 'select',
@@ -111,7 +111,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['max_file_size'],
             'default' => 256,
             'inputType' => 'text',
-            'eval' => ['rgxp'=>'digit', 'tl_class' => 'w50'],
+            'eval' => ['rgxp'=>'digit', 'tl_class' => 'clr w50'],
             'sql' => "int(10) unsigned NOT NULL default 256"
         ],
         'token' => [
