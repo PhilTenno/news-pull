@@ -288,6 +288,16 @@ class Importer
                 $ce->imageTitle = '';
                 $ce->cssID = serialize(['', 'newspull__image']);
 
+                // Teaser-Bild am News-Datensatz setzen, falls konfiguriert
+                if (!empty($config->teaser_image)) {
+                    $news->addImage = 1;
+                    $news->singleSRC = $fileModel->uuid;  // UUID (binary(16))
+                    $news->overwriteMeta = 1;
+                    $news->alt = $altText;
+                    $news->imageTitle = '';               // leer lassen
+                    $news->save();
+                }
+
                 $ce->save();
             } else {
                 // Datei nicht in tl_files – versuche gezielt zu registrieren
@@ -324,7 +334,17 @@ class Importer
                             $ce->imageTitle = '';
                             $ce->cssID = serialize(['', 'newspull__image']);
                             
-                            $ce->save();
+                            // Teaser-Bild am News-Datensatz setzen, falls konfiguriert
+                            if (!empty($config->teaser_image)) {
+                                $news->addImage = 1;
+                                $news->singleSRC = $fileModel->uuid;  // UUID (binary(16))
+                                $news->overwriteMeta = 1;
+                                $news->alt = $altText;
+                                $news->imageTitle = '';               // leer lassen
+                                $news->save();
+                            }
+
+                            $ce->save();                            
 
                             $this->logger->info(
                                 sprintf('Bild automatisch registriert und CE angelegt: %s', $filePath),

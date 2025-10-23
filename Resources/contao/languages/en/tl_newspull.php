@@ -9,6 +9,7 @@ $GLOBALS['TL_LANG']['tl_newspull']['author'] = ['Author', 'will be set as author
 $GLOBALS['TL_LANG']['tl_newspull']['auto_publish'] = ['Publish automatically', 'publish news immediately'];
 $GLOBALS['TL_LANG']['tl_newspull']['batch_size'] = ['Batch size', 'Number of news per run'];
 $GLOBALS['TL_LANG']['tl_newspull']['max_file_size'] = ['Maximum file size', 'size per file in KB'];
+$GLOBALS['TL_LANG']['tl_newspull']['teaser_image'] = ['Also use image in teaser', 'Uses the imported image additionally as the teaser image of the news article (if available).'];
 $GLOBALS['TL_LANG']['tl_newspull']['teaser_news'] = ['Teaser inside article', 'include teaser inside article'];
 $GLOBALS['TL_LANG']['tl_newspull']['no_htmltags'] = ['Delete HTML Tags', 'delete all HTML, including images'];
 $GLOBALS['TL_LANG']['tl_newspull']['linktarget'] = ['Link Target', 'open Link in new window incl. nofollow/noopener'];

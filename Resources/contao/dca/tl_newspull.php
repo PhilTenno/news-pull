@@ -38,7 +38,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
     ],
     'palettes' => [
         '__selector__' => [],
-        'default' => '{settings_legend},title,token,upload_dir,image_dir,image_size,news_archive,author,batch_size,max_file_size,auto_publish,teaser_news,no_htmltags,no_imagetags,linktarget'
+        'default' => '{settings_legend},title,token,upload_dir,image_dir,image_size,news_archive,author,batch_size,max_file_size,auto_publish,teaser_image,teaser_news,no_htmltags,no_imagetags,linktarget'
     ],
     'fields' => [
         'title' => [
@@ -111,7 +111,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['max_file_size'],
             'default' => 256,
             'inputType' => 'text',
-            'eval' => ['rgxp'=>'digit', 'tl_class' => 'clr w50'],
+            'eval' => ['rgxp'=>'digit', 'tl_class' => 'w50'],
             'sql' => "int(10) unsigned NOT NULL default 256"
         ],
         'token' => [
@@ -124,26 +124,32 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['auto_publish'],
             'inputType' => 'checkbox',
             'eval' => [
-                'tl_class' => 'w33'
+                'tl_class' => 'clr w50'
             ],
             'sql' => "char(1) NOT NULL default ''"
         ],
+        'teaser_image' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['teaser_image'],
+            'inputType' => 'checkbox',
+            'eval' => ['tl_class' => 'w50'],
+            'sql' => "char(1) NOT NULL default ''"
+        ],        
         'teaser_news' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['teaser_news'],
             'inputType' => 'checkbox',
-            'eval' => ['tl_class' => 'w66'],
+            'eval' => ['tl_class' => 'w50'],
             'sql' => "char(1) NOT NULL default ''"
         ],
         'no_htmltags' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['no_htmltags'],
             'inputType' => 'checkbox',
-            'eval' => ['tl_class' => 'w33'],
+            'eval' => ['tl_class' => 'w50'],
             'sql' => "char(1) NOT NULL default ''"
         ],
         'linktarget' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['linktarget'],
             'inputType' => 'checkbox',
-            'eval' => ['tl_class' => 'w33'],
+            'eval' => ['tl_class' => 'w50'],
             'sql' => "char(1) NOT NULL default ''"
         ]                                                       
     ]
