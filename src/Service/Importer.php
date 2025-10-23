@@ -13,6 +13,8 @@ use Contao\FilesModel;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 use PhilTenno\NewsPull\Model\NewspullKeywordsModel;
+use Contao\ImageSizeModel;
+use Contao\Dbafs;
 
 class Importer
 {
@@ -96,12 +98,14 @@ class Importer
             sleep(2); // Pause nach jeder Datei
         }
 
-        // Zusammenfassende Log-Ausgabe nach dem Import
-        $summaryMsg = sprintf('News import: %d successful, %d failed.', $imported, $errors);
-        $this->logger->info(
-            $summaryMsg,
-            ['contao' => new ContaoContext(__METHOD__, $errors > 0 ? ContaoContext::ERROR : ContaoContext::CRON)]
-        );
+        // Zusammenfassende Log-Ausgabe nur bei tatsächlichem Import
+        if ($imported > 0 || $errors > 0) {
+            $summaryMsg = sprintf('News import: %d successful, %d failed.', $imported, $errors);
+            $this->logger->info(
+                $summaryMsg,
+                ['contao' => new ContaoContext(__METHOD__, $errors > 0 ? ContaoContext::ERROR : ContaoContext::CRON)]
+            );
+        }
 
         return [
             'success' => $imported,
@@ -230,6 +234,126 @@ class Importer
         $news->pageTitle = !empty($item['metaTitle']) ? $item['metaTitle'] : $item['title'];
         $news->description = !empty($item['metaDescription']) ? $item['metaDescription'] : $item['teaser'];
         $news->save();
+        
+
+        //
+        // Optionales Bild-CE als erstes Element (vor Teaser/Text)
+        //
+
+        $image = $item['image'] ?? '';
+        $imageAlt = $item['imageAlt'] ?? '';
+
+        if ($image !== '') {
+
+            // 1) Ordnerpfad aus Job-Konfiguration (Fallback: files/)
+            $folderPath = 'files';
+            if (!empty($config->image_dir)) {
+                $folderModel = FilesModel::findByUuid($config->image_dir);
+                if ($folderModel !== null && $folderModel->type === 'folder' && !empty($folderModel->path)) {
+                    $folderPath = $folderModel->path;
+                }
+            }
+
+            // 2) Bildpfad bilden (image enthält nur Dateiname, keine Unterordner)
+            $filePath = rtrim($folderPath, '/') . '/' . ltrim($image, '/');
+
+            // 3) Datei in tl_files suchen
+            $fileModel = FilesModel::findByPath($filePath);
+
+            if ($fileModel !== null) {
+                // 4) Bildgröße validieren (ungültig → ohne size)
+                $imageSizeId = (int) ($config->image_size ?? 0);
+                $imageSizeValid = $imageSizeId > 0 && ImageSizeModel::findByPk($imageSizeId) !== null;
+
+                // 5) Alt-Text (Fallback)
+                $altText = $imageAlt !== '' ? $imageAlt : 'Artikel Bild';
+
+                // 6) Sorting kleiner als das Text-CE (Text nutzt 128)
+                $sorting = 64;
+
+                $ce = new ContentModel();
+                $ce->tstamp    = time();
+                $ce->ptable    = 'tl_news';
+                $ce->pid       = (int) $news->id;
+                $ce->type      = 'image';
+                $ce->sorting   = $sorting;
+                $ce->singleSRC = $fileModel->uuid; // UUID (binary(16))
+                if ($imageSizeValid) {
+                    $ce->size = serialize([0, 0, $imageSizeId]);
+                }
+                
+                // Metadaten überschreiben - separate Felder in Contao 5.x
+                $ce->overwriteMeta = 1;
+                $ce->alt = $altText;
+                $ce->imageTitle = '';
+                $ce->cssID = serialize(['', 'newspull__image']);
+
+                $ce->save();
+            } else {
+                // Datei nicht in tl_files – versuche gezielt zu registrieren
+                $absPath = $this->projectDir . '/' . $filePath;
+
+                if (is_file($absPath)) {
+                    // Datei existiert im Dateisystem – gezielt in tl_files registrieren
+                    try {
+                        Dbafs::addResource($filePath);
+                        // Nach Registrierung erneut suchen
+                        $fileModel = FilesModel::findByPath($filePath);
+
+                        if ($fileModel !== null) {
+                            // Jetzt registriert – Bild-CE anlegen
+                            $imageSizeId = (int) ($config->image_size ?? 0);
+                            $imageSizeValid = $imageSizeId > 0 && ImageSizeModel::findByPk($imageSizeId) !== null;
+                            $altText = $imageAlt !== '' ? $imageAlt : 'Artikel Bild';
+                            $sorting = 64;
+
+                            $ce = new ContentModel();
+                            $ce->tstamp    = time();
+                            $ce->ptable    = 'tl_news';
+                            $ce->pid       = (int) $news->id;
+                            $ce->type      = 'image';
+                            $ce->sorting   = $sorting;
+                            $ce->singleSRC = $fileModel->uuid;
+                            if ($imageSizeValid) {
+                                $ce->size = serialize([0, 0, $imageSizeId]);
+                            }
+                            
+                            // Metadaten überschreiben - separate Felder in Contao 5.x
+                            $ce->overwriteMeta = 1;
+                            $ce->alt = $altText;
+                            $ce->imageTitle = '';
+                            $ce->cssID = serialize(['', 'newspull__image']);
+                            
+                            $ce->save();
+
+                            $this->logger->info(
+                                sprintf('Bild automatisch registriert und CE angelegt: %s', $filePath),
+                                ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+                            );
+                        } else {
+                            $this->logger->warning(
+                                sprintf('Bild konnte nicht registriert werden: %s', $filePath),
+                                ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+                            );
+                        }
+                    } catch (\Throwable $e) {
+                        $this->logger->error(
+                            sprintf('Dbafs::addResource fehlgeschlagen für %s – %s', $filePath, $e->getMessage()),
+                            ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                        );
+                    }
+                } else {
+                    $this->logger->warning(
+                        sprintf('Bild übersprungen: Datei nicht gefunden (%s)', $filePath),
+                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+                    );
+                }
+            }            
+        }
+
+        //
+        //Bild Ende
+        //
 
         // Keywords wie gehabt
         if (!empty($item['keywords'])) {

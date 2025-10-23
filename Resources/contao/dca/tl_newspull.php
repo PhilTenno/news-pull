@@ -38,7 +38,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
     ],
     'palettes' => [
         '__selector__' => [],
-        'default' => '{settings_legend},title,token,upload_dir,news_archive,author,batch_size,max_file_size,auto_publish,teaser_news,no_htmltags,no_imagetags,linktarget'
+        'default' => '{settings_legend},title,token,upload_dir,image_dir,image_size,news_archive,author,batch_size,max_file_size,auto_publish,teaser_news,no_htmltags,no_imagetags,linktarget'
     ],
     'fields' => [
         'title' => [
@@ -64,7 +64,7 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
                 'mandatory' => true,
                 'fieldType' => 'radio', 
                 'files' => false,       
-                'tl_class' => 'clr w100'
+                'tl_class' => 'w50'
             ],
             'sql' => "binary(16) NULL" 
         ],
@@ -74,7 +74,25 @@ $GLOBALS['TL_DCA']['tl_newspull'] = [
             'foreignKey' => 'tl_news_archive.title',
             'eval' => ['mandatory' => true, 'tl_class' => 'w50'],
             'sql' => "int(10) unsigned NOT NULL default 0"
-        ],
+        ], 
+        'image_size' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['image_size'],
+            'inputType' => 'select',
+            'foreignKey' => 'tl_image_size.name',
+            'eval' => ['mandatory' => true, 'tl_class' => 'clr w50'],
+            'sql' => "int(10) unsigned NOT NULL default 0"
+        ],               
+        'image_dir' => [
+            'label' => &$GLOBALS['TL_LANG']['tl_newspull']['image_dir'],
+            'inputType' => 'fileTree',
+            'eval' => [
+                'mandatory' => true,
+                'fieldType' => 'radio', // Einzelauswahl
+                'files' => false,       // Ordnerauswahl
+                'tl_class' => 'w50'
+            ],
+            'sql' => "binary(16) NULL"
+        ],                
         'author' => [
             'label' => &$GLOBALS['TL_LANG']['tl_newspull']['author'],
             'inputType' => 'select',
