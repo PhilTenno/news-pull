@@ -6,8 +6,6 @@ use Contao\ContentModel;
 use Contao\NewsModel;
 use PhilTenno\NewsPull\Model\NewspullModel;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Contao\FilesModel;
 use Contao\CoreBundle\Monolog\ContaoContext;
@@ -27,168 +25,66 @@ class Importer
         $this->projectDir = $params->get('kernel.project_dir');
     }
 
-    public function runImport(NewspullModel $config): array
+    public function runImportFromArray(NewspullModel $config, array $items): array
     {
-        $uploadDir = $config->upload_dir;
-        $model = FilesModel::findByUuid($uploadDir);
-
-        if ($model !== null) {
-            $uploadDir = $this->projectDir . '/' . $model->path;
-        } else {
-            $msg = "Upload UUID could not be resolved: " . bin2hex($config->upload_dir);
-            $this->logger->error(
-                $msg,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            return ['success' => 0, 'fail' => 0];
-        }
-
         $batchSize = $config->batch_size ?? 10;
-        $maxFileSize = ($config->max_file_size ?? 256) * 1024; // in bytes
-
-        $fs = new Filesystem();
-        if (!$fs->exists($uploadDir)) {
-            $msg = "Upload directory does not exist: $uploadDir";
-            $this->logger->error(
-                $msg,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            return ['success' => 0, 'fail' => 0];
-        }
-
-        // Alle news*.json außer *_error.json finden
-        $finder = new Finder();
-        $finder->files()
-            ->in($uploadDir)
-            ->name('/^news.*\.json$/i')
-            ->notName('/_error\.json$/i')
-            ->sortByName();
-
-        $imported = 0;
-        $errors = 0;
-        $failed = [];
-
-        foreach ($finder as $file) {
-            $filePath = $file->getRealPath();
-            $fileName = $file->getFilename();
-            $importDate = date('Y-m-d H:i:s');
-
-            // Dateigröße prüfen
-            $fileSize = filesize($filePath);
-            if ($fileSize > $maxFileSize) {
-                $errorFile = preg_replace('/\.json$/i', '_error.json', $filePath);
-                rename($filePath, $errorFile);
-                $msg = "Fehler NewsPull $importDate: Datei zu groß ($fileSize Bytes)";
-                $this->logger->error(
-                    $msg,
-                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-                );
-                $errors++;
-                $failed[] = "$fileName (Datei zu groß)";
-                sleep(2); // Pause nach jeder Datei
-                continue;
-            }
-
-            // Datei einlesen und News importieren
-            $result = $this->importNewsJsonFile($filePath, $config, $batchSize, $importDate, $failed);
-            $imported += $result['success'];
-            $errors += $result['fail'];
-            // Fehlerhafte Items werden im $failed-Array gesammelt
-
-            sleep(2); // Pause nach jeder Datei
-        }
-
-        // Zusammenfassende Log-Ausgabe nur bei tatsächlichem Import
-        if ($imported > 0 || $errors > 0) {
-            $summaryMsg = sprintf('News import: %d successful, %d failed.', $imported, $errors);
-            $this->logger->info(
-                $summaryMsg,
-                ['contao' => new ContaoContext(__METHOD__, $errors > 0 ? ContaoContext::ERROR : ContaoContext::CRON)]
-            );
-        }
-
-        return [
-            'success' => $imported,
-            'fail' => $errors,
-            'failed' => $failed,
-        ];
+        return $this->importItemsArray($items, $config, $batchSize);
     }
 
-    private function importNewsJsonFile(string $filePath, NewspullModel $config, int $batchSize, string $importDate, array &$failed): array
+    private function importItemsArray(array $items, NewspullModel $config, int $batchSize): array
     {
-        $fs = new Filesystem();
-        $fileName = basename($filePath);
-
-        $json = json_decode(file_get_contents($filePath), true);
-        if (!is_array($json)) {
-            // Ganze Datei fehlerhaft
-            $errorFile = preg_replace('/\.json$/i', '_error.json', $filePath);
-            rename($filePath, $errorFile);
-            $msg = "Fehler NewsPull $importDate: Datei nicht lesbar oder kein Array";
-            $this->logger->error(
-                $msg,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-            $failed[] = "$fileName (Datei nicht lesbar)";
-            return ['success' => 0, 'fail' => 1];
+        if (!is_array($items)) {
+            return ['success' => 0, 'fail' => 0, 'failed' => ['JSON root is not an array']];
         }
 
+        $items = array_values($items);
         $success = 0;
         $fail = 0;
-        $errorItems = [];
-        $itemCount = count($json);
+        $failed = [];
+        $importDate = date('Y-m-d H:i:s');
 
-        foreach (array_chunk($json, $batchSize, true) as $batch) {
-            foreach ($batch as $idx => $item) {
-                $itemNr = $idx + 1;
+        foreach (array_chunk($items, $batchSize, true) as $batch) {
+            $batch = array_values($batch);
+            foreach ($batch as $i => $item) {
+                $itemNr = $i + 1;
+
                 $error = $this->validateNewsItem($item);
                 if ($error !== null) {
-                    $msg = "NewsPull $importDate: Item Nr. $itemNr fehlerhaft ($error)";
                     $this->logger->error(
-                        $msg,
+                        sprintf('NewsPull %s: Item Nr. %d fehlerhaft (%s)', $importDate, $itemNr, $error),
                         ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
                     );
                     $fail++;
-                    $failed[] = "$fileName: Item $itemNr ($error)";
-                    $errorItems[] = $item;
+                    $failed[] = sprintf('Item %d (%s)', $itemNr, $error);
                     continue;
                 }
 
-                // Importiere Item
-                $this->importNewsItem($item, $config);
-                $success++;
+                try {
+                    $this->importNewsItem($item, $config);
+                    $success++;
+                } catch (\Throwable $e) {
+                    $fail++;
+                    $failed[] = sprintf('Item %d (Exception: %s)', $itemNr, $e->getMessage());
+                    $this->logger->error(
+                        sprintf('NewsPull %s: Fehler beim Import von Item %d – %s', $importDate, $itemNr, $e->getMessage()),
+                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                    );
+                }
             }
-            sleep(2); // Pause nach jedem Batch
+
+            // optional: kleine Pause wie beim Datei-Import
+            sleep(2);
         }
 
-        // Fehlerhafte Items in news_error.json speichern, falls vorhanden
-        if (count($errorItems) > 0) {
-            $errorFile = preg_replace('/\.json$/i', '_error.json', $filePath);
-            file_put_contents($errorFile, json_encode(array_values($errorItems), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            $msg = "Fehler NewsPull $importDate: $fail fehlerhafte Items in $fileName";
-            $this->logger->error(
-                $msg,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
-            );
-        }
-
-        // Datei löschen, wenn alle erfolgreich
-        if ($success === $itemCount) {
-            $fs->remove($filePath);
-            $msg = "NewsPull $importDate erfolgreich importiert";
+        if ($success > 0 || $fail > 0) {
+            $summaryMsg = sprintf('News import (POST): %d successful, %d failed.', $success, $fail);
             $this->logger->info(
-                $msg,
-                ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+                $summaryMsg,
+                ['contao' => new ContaoContext(__METHOD__, $fail > 0 ? ContaoContext::ERROR : ContaoContext::CRON)]
             );
-        } elseif ($success > 0) {
-            // Teilweise Erfolg: Originaldatei löschen, Fehlerdatei bleibt
-            $fs->remove($filePath);
-        } else {
-            // Alle fehlerhaft: Originaldatei löschen, Fehlerdatei bleibt
-            $fs->remove($filePath);
         }
 
-        return ['success' => $success, 'fail' => $fail];
+        return ['success' => $success, 'fail' => $fail, 'failed' => $failed];
     }
 
     private function validateNewsItem(array $item): ?string
@@ -207,7 +103,23 @@ class Importer
 
     private function importNewsItem(array $item, NewspullModel $config): void
     {
-        // --- Hier bleibt die Logik wie bisher, nur die Quelle ist jetzt das Array $item ---
+        // Newlines in Eingabefeldern vollständig entfernen
+        if (isset($item['title']) && is_string($item['title'])) {
+            $item['title'] = $this->sanitizeControlChars($item['title']);
+        }
+        if (isset($item['metaTitle']) && is_string($item['metaTitle'])) {
+            $item['metaTitle'] = $this->sanitizeControlChars($item['metaTitle']);
+        }        
+        if (isset($item['article']) && is_string($item['article'])) {
+            $item['article'] = $this->sanitizeControlChars($item['article']);
+        }
+        if (isset($item['teaser']) && is_string($item['teaser'])) {
+            $item['teaser'] = $this->sanitizeControlChars($item['teaser']);
+        }
+        if (isset($item['metaDescription']) && is_string($item['metaDescription'])) {
+            $item['metaDescription'] = $this->sanitizeControlChars($item['metaDescription']);
+        }        
+
         $news = new NewsModel();
         $news->pid = $config->news_archive;
         $news->tstamp = time();
@@ -217,6 +129,7 @@ class Importer
         $news->time = time();
         $news->published = !empty($config->auto_publish) ? 1 : 0;
         $news->teaser = $this->stripHtmlTags($item['teaser']);
+
         $dateShow = $item['dateShow'] ?? '';
         if ($dateShow !== '') {
             $timestamp = strtotime($dateShow);
@@ -224,6 +137,7 @@ class Importer
                 $news->start = $timestamp;
             }
         }
+
         $slugger = new AsciiSlugger('de');
         $alias = strtolower($slugger->slug($item['title'])->toString());
         $existing = NewsModel::findByAlias($alias);
@@ -231,20 +145,18 @@ class Importer
             $alias .= '-' . uniqid();
         }
         $news->alias = $alias;
+
         $news->pageTitle = !empty($item['metaTitle']) ? $item['metaTitle'] : $item['title'];
         $news->description = !empty($item['metaDescription']) ? $item['metaDescription'] : $item['teaser'];
         $news->save();
-        
 
         //
         // Optionales Bild-CE als erstes Element (vor Teaser/Text)
         //
-
         $image = $item['image'] ?? '';
         $imageAlt = $item['imageAlt'] ?? '';
 
         if ($image !== '') {
-
             // 1) Ordnerpfad aus Job-Konfiguration (Fallback: files/)
             $folderPath = 'files';
             if (!empty($config->image_dir)) {
@@ -274,8 +186,8 @@ class Importer
                 $ce = new ContentModel();
                 $ce->tstamp    = time();
                 $ce->ptable    = 'tl_news';
-                $ce->pid       = (int) $news->id;
-                $ce->type      = 'image';
+                $ce->pid    = (int) $news->id;
+                $ce->type    = 'image';
                 $ce->sorting   = $sorting;
                 $ce->singleSRC = $fileModel->uuid; // UUID (binary(16))
                 if ($imageSizeValid) {
@@ -294,7 +206,7 @@ class Importer
                     $news->singleSRC = $fileModel->uuid;  // UUID (binary(16))
                     $news->overwriteMeta = 1;
                     $news->alt = $altText;
-                    $news->imageTitle = '';               // leer lassen
+                    $news->imageTitle = '';    // leer lassen
                     $news->save();
                 }
 
@@ -320,8 +232,8 @@ class Importer
                             $ce = new ContentModel();
                             $ce->tstamp    = time();
                             $ce->ptable    = 'tl_news';
-                            $ce->pid       = (int) $news->id;
-                            $ce->type      = 'image';
+                            $ce->pid    = (int) $news->id;
+                            $ce->type    = 'image';
                             $ce->sorting   = $sorting;
                             $ce->singleSRC = $fileModel->uuid;
                             if ($imageSizeValid) {
@@ -340,11 +252,11 @@ class Importer
                                 $news->singleSRC = $fileModel->uuid;  // UUID (binary(16))
                                 $news->overwriteMeta = 1;
                                 $news->alt = $altText;
-                                $news->imageTitle = '';               // leer lassen
+                                $news->imageTitle = '';    // leer lassen
                                 $news->save();
                             }
 
-                            $ce->save();                            
+                            $ce->save();    
 
                             $this->logger->info(
                                 sprintf('Bild automatisch registriert und CE angelegt: %s', $filePath),
@@ -368,7 +280,7 @@ class Importer
                         ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
                     );
                 }
-            }            
+            }    
         }
 
         //
@@ -407,7 +319,7 @@ class Importer
         }
         // Jetzt das manipulierte $articleHtml weiterverarbeiten!
         $articleHtml = $this->sanitizeHtml($articleHtml);
-        $articleHtml = $this->addFigureWrapperToImages($articleHtml);        
+        $articleHtml = $this->addFigureWrapperToImages($articleHtml);    
         $articleHtml = $this->wrapTablesWithContentTableClass($articleHtml);
         $this->createContentElement($news->id, $articleHtml, 'newsPull__article');
     }
@@ -423,31 +335,6 @@ class Importer
         $content->cssID = serialize(['', $cssClass]);
         $content->tstamp = time();
         $content->save();
-    }
-
-    private function sanitizeHtml(string $html): string
-    {
-        $allowedTags = [
-            'p', 'a', 'strong', 'em','u','i','b','br', 'ul', 'ol', 'li', 'br', 'span', 'div',
-            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote','pre','code','img','sub','sup',
-            'h1','h2','h3','h4','h5','h6','svg','path', 'rect', 'circle', 'g', 'line', 'polyline', 'polygon',
-            'ellipse', 'text', 'defs', 'use', 'symbol', 'clipPath', 'mask', 'figure', 'figcaption','article','section'
-        ];
-
-        $allowedAttributes = [
-            'href', 'src', 'alt', 'target', 'rel', 'title', 'style', 'class', 'colspan', 'rowspan','width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width', 'x', 'y', 'cx', 'cy', 'r', 'd', 'points', 'transform', 'opacity','x1', 'y1', 'x2', 'y2', 'rx', 'ry', 'style', 'class', 'id',
-            'xlink:href', 'xmlns', 'xmlns:xlink', 'marker-end', 'marker-mid', 'marker-start','font-size', 'font-family', 'text-anchor', 'dominant-baseline', 'clip-path', 'mask'
-        ];
-
-        $html = preg_replace('/<\?(php)?[\s\S]*?\?>/i', '', $html);
-
-        $doc = new \DOMDocument();
-        libxml_use_internal_errors(true);
-        $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-
-        $this->cleanDomNode($doc, $allowedTags, $allowedAttributes);
-
-        return trim($doc->saveHTML());
     }
 
     public function wrapTablesWithContentTableClass($html)
@@ -528,27 +415,79 @@ class Importer
 
     private function cleanDomNode(\DOMNode $node, array $allowedTags, array $allowedAttributes): void
     {
-      if ($node instanceof \DOMElement) {
-        if (!in_array($node->tagName, $allowedTags, true)) {
-          $node->parentNode?->removeChild($node);
-          return;
-        }
+        if ($node instanceof \DOMElement) {
+            if (!in_array($node->tagName, $allowedTags, true)) {
+                $node->parentNode?->removeChild($node);
+                return;
+            }
 
-        foreach (iterator_to_array($node->attributes ?? []) as $attr) {
-          if (!in_array($attr->name, $allowedAttributes, true)) {
-            $node->removeAttribute($attr->name);
-          }
+            foreach (iterator_to_array($node->attributes ?? []) as $attr) {
+                if (!in_array($attr->name, $allowedAttributes, true)) {
+                    $node->removeAttribute($attr->name);
+                }
+            }
         }
-      }
-      foreach (iterator_to_array($node->childNodes ?? []) as $child) {
-        $this->cleanDomNode($child, $allowedTags, $allowedAttributes);
-      }
+        foreach (iterator_to_array($node->childNodes ?? []) as $child) {
+            $this->cleanDomNode($child, $allowedTags, $allowedAttributes);
+        }
     }
+
     private function stripHtmlTags(string $html): string
     {
         // Entfernt alle HTML-Tags und trimmt das Ergebnis
         return trim(strip_tags($html));
     }
+
+    private function sanitizeHtml(string $html): string
+    {
+        $allowedTags = [
+            'p', 'a', 'strong', 'em','u','i','b','br', 'ul', 'ol', 'li', 'br', 'span', 'div',
+            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'blockquote','pre','code','img','sub','sup',
+            'h1','h2','h3','h4','h5','h6','svg','path', 'rect', 'circle', 'g', 'line', 'polyline', 'polygon',
+            'ellipse', 'text', 'defs', 'use', 'symbol', 'clipPath', 'mask', 'figure', 'figcaption','article','section'
+        ];
+
+        $allowedAttributes = [
+            'href', 'src', 'alt', 'target', 'rel', 'title', 'style', 'class', 'colspan', 'rowspan','width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width', 'x', 'y', 'cx', 'cy', 'r', 'd', 'points', 'transform', 'opacity','x1', 'y1', 'x2', 'y2', 'rx', 'ry', 'style', 'class', 'id',
+            'xlink:href', 'xmlns', 'xmlns:xlink', 'marker-end', 'marker-mid', 'marker-start','font-size', 'font-family', 'text-anchor', 'dominant-baseline', 'clip-path', 'mask'
+        ];
+
+        $html = preg_replace('/<\?(php)?[\s\S]*?\?>/i', '', $html);
+
+        $doc = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+
+        $this->cleanDomNode($doc, $allowedTags, $allowedAttributes);
+
+        return trim($doc->saveHTML());
+    }
+
+    private function sanitizeControlChars(string $text): string
+    {
+        // 1) Sichtbare Sequenzen (\r\n, \n, \r, \t) in echte Steuerzeichen wandeln
+        $text = str_replace(['\\r\\n', '\\n', '\\r', '\\t'], ["\n", "\n", "\n", "\t"], $text);
+
+        // 2) Echte Newlines, Carriage Returns und Tabs entfernen
+        $text = str_replace(["\r\n", "\r", "\n", "\t"], '', $text);
+
+        // 3) Alle Control Characters entfernen, außer NBSP (U+00A0) und Soft Hyphen (U+00AD)
+        //    - U+0000–U+001F und U+007F–U+009F
+        //    - Wir nehmen NBSP und Soft Hyphen vorher „in Schutz“ und restaurieren sie.
+        $placeholderNbsp = "__NBSP_PLACEHOLDER__";
+        $placeholderShy  = "__SHY_PLACEHOLDER__";
+        $text = str_replace(["\u{00A0}", "\u{00AD}"], [$placeholderNbsp, $placeholderShy], $text);
+
+        // Entfernt Control Blocks C0 (0000–001F) und C1 (007F–009F)
+        // Achtung: benötigt das u-Flag für Unicode
+        $text = preg_replace('/[\x00-\x1F\x7F-\x9F]/u', '', $text);
+
+        // Platzhalter zurück in echte NBSP und Soft Hyphen wandeln
+        $text = str_replace([$placeholderNbsp, $placeholderShy], ["\u{00A0}", "\u{00AD}"], $text);
+
+        return $text;
+    }
+
     private function addTargetAndRelToLinks(string $html): string
     {
         if (stripos($html, '<a ') === false) {
@@ -581,5 +520,5 @@ class Importer
         // Optional: XML-Prolog entfernen
         $result = preg_replace('/^\s*<\?xml.*?\?>\s*/is', '', $result);
         return $result;
-    }      
+    }    
 }
