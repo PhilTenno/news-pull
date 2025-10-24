@@ -1,18 +1,26 @@
 <?php
-$GLOBALS['TL_LANG']['tl_newspull']['title'] = ['Title', 'configuration name'];
-$GLOBALS['TL_LANG']['tl_newspull']['token'] = ['Token', 'import URL: https://your-domain.com/newspullimport?token=Your_Token or =all'];
-$GLOBALS['TL_LANG']['tl_newspull']['upload_dir'] = ['Upload directory', 'path below /files'];
-$GLOBALS['TL_LANG']['tl_newspull']['image_dir'] = ['Image directory', 'image files folder'];
-$GLOBALS['TL_LANG']['tl_newspull']['image_size'] = ['Image size ID', 'id of image size'];
-$GLOBALS['TL_LANG']['tl_newspull']['news_archive'] = ['News archive', 'target archive for new news'];
-$GLOBALS['TL_LANG']['tl_newspull']['author'] = ['Author', 'will be set as author'];
-$GLOBALS['TL_LANG']['tl_newspull']['auto_publish'] = ['Publish automatically', 'publish news immediately'];
-$GLOBALS['TL_LANG']['tl_newspull']['batch_size'] = ['Batch size', 'Number of news per run'];
-$GLOBALS['TL_LANG']['tl_newspull']['max_file_size'] = ['Maximum file size', 'size per file in KB'];
-$GLOBALS['TL_LANG']['tl_newspull']['teaser_image'] = ['Also use image in teaser', 'Uses the imported image additionally as the teaser image of the news article (if available).'];
-$GLOBALS['TL_LANG']['tl_newspull']['teaser_news'] = ['Teaser inside article', 'include teaser inside article'];
-$GLOBALS['TL_LANG']['tl_newspull']['no_htmltags'] = ['Delete HTML Tags', 'delete all HTML, including images'];
-$GLOBALS['TL_LANG']['tl_newspull']['linktarget'] = ['Link Target', 'open Link in new window incl. nofollow/noopener'];
 
-$GLOBALS['TL_LANG']['tl_newspull']['settings_legend'] = 'Import Settings';
-$GLOBALS['TL_LANG']['tl_newspull']['delete'] = ['Delete', 'Delete the configuration'];
+// Legends
+$GLOBALS['TL_LANG']['tl_newspull']['settings_legend']     = 'Settings';
+
+// Fields
+$GLOBALS['TL_LANG']['tl_newspull']['title']               = ['Title', 'Name of this news pull configuration.'];
+$GLOBALS['TL_LANG']['tl_newspull']['token']               = ['Token',
+    'Example URL: https://your-domain.com/newspullimport?token=YOUR_TOKEN'
+];
+$GLOBALS['TL_LANG']['tl_newspull']['image_dir']           = ['Image folder', 'Folder used to look up images by filename.'];
+$GLOBALS['TL_LANG']['tl_newspull']['image_size']          = ['Image size', 'Predefined image size to use for the image content element.'];
+$GLOBALS['TL_LANG']['tl_newspull']['news_archive']        = ['News archive', 'Target archive for imported news.'];
+$GLOBALS['TL_LANG']['tl_newspull']['author']              = ['Author', 'Default author for imported news.'];
+$GLOBALS['TL_LANG']['tl_newspull']['auto_publish']        = ['Auto publish', 'Publish imported news automatically.'];
+$GLOBALS['TL_LANG']['tl_newspull']['batch_size']          = ['Batch size', 'Number of items to process per batch.'];
+$GLOBALS['TL_LANG']['tl_newspull']['max_payload_size_kb'] = ['Max. payload size (KB)', 'Maximum size of the JSON payload for the POST import in kilobytes.'];
+$GLOBALS['TL_LANG']['tl_newspull']['teaser_image']        = ['Set teaser image', 'Also store the image as teaser image on the news record (if available).'];
+$GLOBALS['TL_LANG']['tl_newspull']['teaser_news']         = ['Teaser as content element', 'Insert the teaser as a separate content element before the article.'];
+$GLOBALS['TL_LANG']['tl_newspull']['no_htmltags']         = ['Remove HTML tags', 'Remove all HTML tags from teaser and article (plain text only).'];
+$GLOBALS['TL_LANG']['tl_newspull']['linktarget']          = ['Harden external links', 'Add target="_blank" and rel="nofollow noopener" to links automatically.'];
+
+// Operations
+$GLOBALS['TL_LANG']['tl_newspull']['settings_legend'] = 'Import settings';
+$GLOBALS['TL_LANG']['tl_newspull']['delete'] = ['Delete', 'Delete this configuration'];
+
