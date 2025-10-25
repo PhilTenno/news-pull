@@ -29,20 +29,13 @@ Aufbau Json:
   'keywords': 'keywords-1,keywords-2,keywords-3', // -> optional: Keywords für verwandte Artikel
   'image': 'Name eines Bildes', // -> imagage.jpg // -> optional, wenn ein Bild separat auf den Server geladen wurde
   'imageAlt': 'Alt Beschreibung' // -> Bildbeschreibung des Bildes // -> optional
-  },
-  {
-  'title': 'News-Titel 2',
-  'teaser': 'Teaer-Text 2',
-  'article': 'Artikel-Text 2',
-  'metaTitle': 'Meta-titel 2',
-  'metaDescription': 'Meta Beschreibung 2',
-  'dateShow': '2025-06-12 00:01:00', 
-  'keywords': 'keywords-1,keywords-2,keywords-3'
-  'image': 'image.jpg',
-  'imageAlt': 'ein wunderschönes Bild'
-  },
-  {...}
+  }
 ]
+
+Aufbau Batch:
+{ "items": [ { ... }, { ... } ] }
+
+
 ```
 ### Installation
 ```
@@ -56,4 +49,4 @@ $ composer require philtenno/news-pull
 --> SEO
 --> Intranetveröffentlichungen
 ```
-*made with love by [hardbitrocker](https://hardbitrocker.de)*
+*made with love by [hardbitrocker](https://www.hardbitrocker.de/blog/artikel-news-import-fuer-contao-5-3-mittels-ki-workflow-automation-n8n-io)*
