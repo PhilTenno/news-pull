@@ -352,7 +352,7 @@ class Importer
 
         foreach ($tableNodes as $table) {
             $wrapper = $doc->createElement('div');
-            $wrapper->setAttribute('class', 'content-table');
+            $wrapper->setAttribute('class', 'content-table newsPull__table');
             // Tabelle aus dem DOM entfernen und ins Wrapper-Div einfügen
             $clonedTable = $table->cloneNode(true);
             $wrapper->appendChild($clonedTable);
