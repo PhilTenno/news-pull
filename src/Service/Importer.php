@@ -198,7 +198,7 @@ class Importer
                 $ce->overwriteMeta = 1;
                 $ce->alt = $altText;
                 $ce->imageTitle = '';
-                $ce->cssID = serialize(['', 'newspull__image']);
+                $ce->cssID = serialize(['', 'newsPull__image']);
 
                 // Teaser-Bild am News-Datensatz setzen, falls konfiguriert
                 if (!empty($config->teaser_image)) {
@@ -244,7 +244,7 @@ class Importer
                             $ce->overwriteMeta = 1;
                             $ce->alt = $altText;
                             $ce->imageTitle = '';
-                            $ce->cssID = serialize(['', 'newspull__image']);
+                            $ce->cssID = serialize(['', 'newsPull__image']);
                             
                             // Teaser-Bild am News-Datensatz setzen, falls konfiguriert
                             if (!empty($config->teaser_image)) {
@@ -395,7 +395,7 @@ class Importer
 
             // Wrapper <figure class="newspull__figure"> erzeugen
             $wrapper = $doc->createElement('figure');
-            $wrapper->setAttribute('class', 'newspull__figure');
+            $wrapper->setAttribute('class', 'newsPull__figure');
             
             // IMG klonen und ins Wrapper-<figure> einfügen
             $clonedImg = $img->cloneNode(true);
