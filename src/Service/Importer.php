@@ -103,7 +103,7 @@ class Importer
 
     private function importNewsItem(array $item, NewspullModel $config): void
     {
-        // ========== MULTIPART-UPLOAD HANDLING (NEU) ==========
+        // ========== MULTIPART-UPLOAD HANDLING ==========
         $fileModel = null;
         $imageAlt = $item['imageAlt'] ?? '';
 
@@ -111,7 +111,7 @@ class Importer
             $upload = $item['_uploadedFile'];
 
             // 1) Zielverzeichnis aus Konfiguration
-            $targetDir = 'files'; // Fallback
+            $targetDir = 'files';
             if (!empty($config->image_dir)) {
                 $folderModel = FilesModel::findByUuid($config->image_dir);
                 if ($folderModel !== null && $folderModel->type === 'folder' && !empty($folderModel->path)) {
@@ -136,19 +136,7 @@ class Importer
                         Dbafs::addResource($relativePath);
                         $fileModel = FilesModel::findByPath($relativePath);
                         if ($fileModel !== null) {
-
-                            //Standard-Metadaten (Alt->Default)
-                            $meta = $fileModel->meta ? unserialize($fileModel->meta) : [];
-                            if (!is_array($meta)) {
-                                $meta = [];
-                            }
-                            $lang = $GLOBALS['TL_LANGUAGE'] ?? 'de';
-                            $meta[$lang]['title'] = ''; // leer lassen
-                            $meta[$lang]['alt'] = $imageAlt ?? '';
-                            $fileModel->meta = serialize($meta);
-                            $fileModel->save();
-
-                            $this->logger->info(
+                              $this->logger->info(
                                 sprintf('Multipart-Bild registriert: %s', $relativePath),
                                 ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
                             );
@@ -163,6 +151,42 @@ class Importer
             }
         }
         // ========== ENDE MULTIPART-UPLOAD HANDLING ==========
+
+        // ========== FTP-UPLOAD HANDLING (NEU) ==========
+        if ($fileModel === null && !empty($item['image'])) {
+            $targetDir = 'files';
+            if (!empty($config->image_dir)) {
+                $folderModel = FilesModel::findByUuid($config->image_dir);
+                if ($folderModel !== null && $folderModel->type === 'folder' && !empty($folderModel->path)) {
+                    $targetDir = $folderModel->path;
+                }
+            }
+
+            // Datei im Zielverzeichnis prüfen
+            $relativePath = sprintf('%s/%s', rtrim($targetDir, '/'), ltrim($item['image'], '/'));
+            $absPath = $this->projectDir . '/' . $relativePath;
+
+            if (is_file($absPath)) {
+                $fileModel = FilesModel::findByPath($relativePath);
+                if ($fileModel === null) {
+                    Dbafs::addResource($relativePath);
+                    $fileModel = FilesModel::findByPath($relativePath);
+                }
+
+                if ($fileModel !== null) {
+                    $this->logger->info(
+                        sprintf('Vorhandenes FTP-Bild registriert: %s', $relativePath),
+                        ['contao' => new ContaoContext(__METHOD__, ContaoContext::CRON)]
+                    );
+                }
+            } else {
+                $this->logger->warning(
+                    sprintf('Kein Bild im Zielverzeichnis gefunden: %s', $relativePath),
+                    ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]
+                );
+            }
+        }
+        // ========== ENDE FTP-UPLOAD HANDLING ==========
 
         // Newlines in Eingabefeldern entfernen
         if (isset($item['title']) && is_string($item['title'])) {
