@@ -29,5 +29,12 @@
   },
   "extra": {
     "contao-manager-plugin": "PhilTenno\\NewsPull\\ContaoManager\\Plugin"
+  },
+  "config": {
+    "allow-plugins": {
+      "contao-components/installer": true,
+      "php-http/discovery": true,
+      "contao/manager-plugin": true
+    }
   }
 }

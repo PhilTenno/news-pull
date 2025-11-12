@@ -16,24 +16,47 @@ Ein Frontend-Modul ermöglicht zusätzlich das Anzeigen verwandter Artikel
 auf Basis der Keywords. Das Frontendmodul kann hierfür einfach nach dem 
 Contao-News-Reader-Modul eingefügt werden.
 ```
+
+## Import-Formate
 ```
-Aufbau Json:
+Der Import erfolgt per HTTP POST Request über den Endpunkt:
+https://domain.com/newspullimport?token=dein_token
+```
+### Variante 1: Aufbau Json:
+```
 [
   {
   'title': 'News-Titel 1',
   'teaser': 'Teaser-Text',
   'article': 'Artikel-Text: erlaubt ist reiner Text und/oder HTML-Elemenmte wie in TinyMce',
   'metaTitle': 'Meta-Titel der News', // -> optional: Fallback = title 
-  'metaDescription': 'Meta Beschreibung des Artikels', // -> optional: Fallback = teaser
+  'metaDescription': 'Meta Beschreibung des Artikels', // -> optional: Fallback = Teaser
   'dateShow': '2025-06-10 04:06:00', // -> optional: Datum, wann der Artikel sichtbar sein soll
-  'keywords': 'keywords-1,keywords-2,keywords-3', // -> optional: Keywords für verwandte Artikel
-  'image': 'Name eines Bildes', // -> imagage.jpg // -> optional, wenn ein Bild separat auf den Server geladen wurde
+  'keywords': 'keyword-1,keyword-2,keyword-3', // -> optional: Keywords für verwandte Artikel
+  'image': 'Name eines Bildes', // -> imagage.jpg // -> optional, wenn ein Bild separat auf den Server (Verzeichnis wird in der Erweiterungs-Konfiguration in Contao angelegt) wurde
   'imageAlt': 'Alt Beschreibung' // -> Bildbeschreibung des Bildes // -> optional
   }
 ]
+```
 
-Aufbau Batch:
-{ "items": [ { ... }, { ... } ] }
+### Variante 2: Multipart (neu):
+```
+curl -X POST "https://domain.com/newspullimport?token=dein_token" \
+  -F 'payload={
+    "items": [
+      {
+        "title": "News-Titel 1",
+        "teaser": "Teaser-Text",
+        "article": "<p>Artikeltext oder HTML-Elemente</p>",
+        "metaTitle": "Meta-Titel der News",
+        "metaDescription": "Meta-Beschreibung der News",
+        "dateShow": "2025-06-10 04:06:00",
+        "keywords": "keyword-1,keyword-2,keyword-3",
+        "imageAlt": "Beschreibung des Bildes"
+      }
+    ]
+  };type=application/json' \
+  -F 'image=@/pfad/zur/datei.jpg;type=image/jpeg'
 
 
 ```
@@ -42,7 +65,7 @@ Aufbau Batch:
 $ composer require philtenno/news-pull
 ```
 
-### Anwendungsmöglichkeiten
+#### Anwendungsmöglichkeiten
 ```
 --> News
 --> Magazine
