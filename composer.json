@@ -1,7 +1,7 @@
 {
   "name": "philtenno/news-pull",
   "description": "Contao-Erweiterung zum Importieren von News.",
-  "keywords": ["contao", "news", "import"],
+  "keywords": ["contao", "news", "import", "n8n", "automation", "workflow"],
   "type": "contao-bundle",
   "license": "proprietary",
   "authors":[
