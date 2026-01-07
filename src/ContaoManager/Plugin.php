@@ -1,5 +1,6 @@
 <?php
-// src/ContaoManager/Plugin.php
+//NEWS-PULL -> src/ContaoManager/Plugin.php
+
 declare(strict_types=1);
 
 namespace PhilTenno\NewsPull\ContaoManager;

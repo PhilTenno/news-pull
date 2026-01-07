@@ -1,4 +1,5 @@
 <?php
+//NEWS-PULL -> Resources/contao/languages/en/default.php
 
 $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] = 'Are you sure?';
 

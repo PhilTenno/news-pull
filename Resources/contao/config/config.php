@@ -1,5 +1,5 @@
 <?php
-
+//NEWS-PULL -> Resources/contao/config/config.php
 $GLOBALS['BE_MOD']['system']['news_pull'] = [
     'tables' => ['tl_newspull']
 ];

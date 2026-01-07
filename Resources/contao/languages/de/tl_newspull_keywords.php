@@ -1,4 +1,6 @@
 <?php
+//NEWS-PULL -> Resources/contao/languages/de/tl_newspull_keywords.php
+
 
 $GLOBALS['TL_LANG']['tl_newspull_keywords']['keywords'] = ['Keywords', 'Geben Sie die Keywords für diesen News-Artikel ein (kommagetrennt). Beispiel: Technologie, Innovation, Digital'];
 

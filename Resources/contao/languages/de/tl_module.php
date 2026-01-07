@@ -1,4 +1,5 @@
 <?php
+//NEWS-PULL -> Resources/contao/languages/de/tl_modules.php
 
 $GLOBALS['TL_LANG']['tl_module']['newspull_max_results'] = ['Max. Ergebnisse', 'Maximale Anzahl verwandter Artikel'];
 $GLOBALS['TL_LANG']['tl_module']['newspull_min_relevance'] = ['Min. Relevanz', 'Mindest-Relevanz für Anzeige'];

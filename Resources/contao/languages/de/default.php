@@ -1,4 +1,5 @@
 <?php
+//NEWS-PULL -> Resources/contao/languages/de/default.php
 
 $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] = 'wirklich löschen?';
 

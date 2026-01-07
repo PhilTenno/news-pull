@@ -1,3 +1,4 @@
+# NEWS-PULL -> config/routes.yaml
 news_import:
   resource: '../src/Controller/'
   type: attribute

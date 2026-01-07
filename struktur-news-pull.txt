@@ -1,0 +1,40 @@
+.
+├── LICENSE
+├── README.md
+├── Resources
+│   └── contao
+│       ├── config
+│       │   └── config.php
+│       ├── dca
+│       │   ├── tl_module.php
+│       │   ├── tl_newspull.php
+│       │   └── tl_newspull_keywords.php
+│       ├── languages
+│       │   ├── de
+│       │   └── en
+│       └── templates
+│           └── frontend_module
+├── composer.json
+├── config
+│   ├── bundles.php
+│   ├── routes.yaml
+│   └── services.yaml
+├── src
+│   ├── ContaoManager
+│   │   └── Plugin.php
+│   ├── Controller
+│   │   ├── FrontendModule
+│   │   │   └── RelatedNewsController.php
+│   │   └── ImportController.php
+│   ├── DependencyInjection
+│   │   └── PhilTennoNewsPullExtension.php
+│   ├── Model
+│   │   ├── NewspullKeywordsModel.php
+│   │   └── NewspullModel.php
+│   ├── PhilTennoNewsPullBundle.php
+│   └── Service
+│       └── Importer.php
+├── struktur-news-pull.txt
+├── templates
+│   └── backend
+│       └── newspull_config.html.twig

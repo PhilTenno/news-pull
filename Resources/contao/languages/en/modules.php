@@ -1,6 +1,6 @@
 <?php
+//NEWS-PULL -> Resources/contao/languages/en/default.php
 
-//* languages/de/modules.php
 // Backend-Modul (bestehend)
 $GLOBALS['TL_LANG']['MOD']['news_pull'] = ['News Pull', 'Automatic news import'];
 

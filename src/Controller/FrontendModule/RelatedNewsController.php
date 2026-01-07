@@ -1,4 +1,6 @@
 <?php
+//NEWS-PULL -> src/Controller/FrontendModule/RelatedNewsController.php
+
 
 declare(strict_types=1);
 

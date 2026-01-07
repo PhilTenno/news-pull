@@ -1,4 +1,6 @@
 <?php
+//NEWS-PULL -> Resources/contao/dca/tl_newspull_keywords.php
+
 use Contao\DC_Table;
 
 $GLOBALS['TL_DCA']['tl_newspull_keywords'] = [

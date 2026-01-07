@@ -1,6 +1,5 @@
 <?php
-
-//src/PhilTennoNewsPullBundle.php
+////NEWS-PULL -> src/PhilTennoNewsPullBundle.php
 
 namespace PhilTenno\NewsPull;
 

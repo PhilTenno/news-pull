@@ -1,4 +1,5 @@
 <?php
+//NEWS-PULL -> Resources/contao/dca/tl_module.php
 
 use Contao\CoreBundle\DataContainer\PaletteManipulator;
 use Contao\Backend;

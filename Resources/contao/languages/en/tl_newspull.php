@@ -1,4 +1,5 @@
 <?php
+//NEWS-PULL -> Resources/contao/languages/en/tl_newspull.php
 
 // Legends
 $GLOBALS['TL_LANG']['tl_newspull']['settings_legend']     = 'Settings';
