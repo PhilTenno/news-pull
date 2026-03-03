@@ -311,6 +311,9 @@ class Importer
         $articleHtml = $this->addFigureWrapperToImages($articleHtml);
         $articleHtml = $this->wrapTablesWithContentTableClass($articleHtml);
 
+        //xml Encoding löschen
+        $articleHtml = preg_replace('/(<!--\?xml.*?\?-->|<\?xml.*?\?>)/is', '', $articleHtml);
+        //
         $this->createContentElement($news->id, $articleHtml, 'newsPull__article');
     }
 
