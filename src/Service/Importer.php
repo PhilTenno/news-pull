@@ -427,6 +427,7 @@ class Importer
         ];
 
         $html = preg_replace('/<\?(php)?[\s\S]*?\?>/i', '', $html);
+        $html = preg_replace('/<!--\?xml encoding="utf-8" \?-->/i', '', $html);
 
         $doc = new \DOMDocument();
         libxml_use_internal_errors(true);
